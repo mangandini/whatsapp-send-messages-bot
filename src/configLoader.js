@@ -87,7 +87,6 @@ async function loadConfig() {
         // In case of DB error, the initial defaults in config object are used
     }
 
-    console.log("DEBUG: Final config object being returned by loadConfig:", JSON.stringify(config, null, 2)); // <<< ADDED DEBUG LOG
     return config;
 }
 

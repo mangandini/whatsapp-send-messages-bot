@@ -19,7 +19,6 @@ Coolify integrates well with PM2. Follow these steps for optimal setup:
 4.  **Persistent Storage:** Configure persistent storage volumes in Coolify for:
     *   `/app/db` (for the `database.sqlite` file)
     *   `/app/.wwebjs_auth` (for the WhatsApp session files)
-    *   *(Optional but recommended)* `/app/uploads` if you want CSV uploads to persist across deployments.
 5.  **Environment Variables:** Add all necessary environment variables (`PORT`, `DATABASE_PATH`, `CORS_ORIGIN`, etc.) in your Coolify service settings. Ensure `DATABASE_PATH` points to the path *inside* the container (e.g., `/app/db/database.sqlite`). `PORT` will be managed by Coolify based on the `web` process.
 6.  **Domain & HTTPS:** Configure your domain name in the Coolify service settings for the `web` application. Coolify will handle the reverse proxy and SSL certificate. Ensure `CORS_ORIGIN` matches your configured domain (e.g., `https://your-bot-domain.com`).
 7.  **QR Code Scanning & Device Linking:**
@@ -45,15 +44,18 @@ If you are deploying to a VPS, container, or another environment where you manag
 2.  **Clone the repository and install dependencies (`npm install`).**
 3.  **Install PM2 globally:** `npm install pm2 -g` (or use `npx pm2` without global installation).
 4.  **Configure Environment Variables:** Set up your `.env` file or configure environment variables directly in your server environment.
-5.  **Start the application:** Navigate to the project directory in your terminal and run:
+5.  **Configure Persistent Storage:** If deploying in an environment where the filesystem is not persistent by default (like containers), ensure you mount persistent volumes for:
+    *   `/app/db` (for the database)
+    *   `/app/.wwebjs_auth` (for the WhatsApp session)
+6.  **Start the application:** Navigate to the project directory in your terminal and run:
     ```bash
     pm2 start ecosystem.config.js
     ```
     *   This command reads `ecosystem.config.js` and starts *both* the `web` and `worker` processes under PM2's management.
     *   Use `pm2 list` to see status, `pm2 logs` to view logs, `pm2 stop all`, `pm2 restart all`, etc.
     *   If running inside a **Docker container**, prefer `pm2-runtime ecosystem.config.js` as your container's `CMD` or `ENTRYPOINT`. This keeps PM2 running in the foreground, which is necessary for containers.
-6.  **QR Code:** Monitor the PM2 logs (`pm2 logs worker`) for the QR code when needed. Follow the same steps as in the Coolify guide to scan it.
-7.  **Web Server Access:** Ensure the port defined for the `web` process (via `PORT` environment variable or default) is accessible, possibly setting up a reverse proxy (like Nginx or Caddy) to handle external traffic and HTTPS.
+7.  **QR Code:** Monitor the PM2 logs (`pm2 logs worker`) for the QR code when needed. Follow the same steps as in the Coolify guide to scan it.
+8.  **Web Server Access:** Ensure the port defined for the `web` process (via `PORT` environment variable or default) is accessible, possibly setting up a reverse proxy (like Nginx or Caddy) to handle external traffic and HTTPS.
 
 ### Deployment with Procfile (e.g., Heroku, Dokku, some Buildpacks)
 
@@ -63,4 +65,7 @@ If your deployment platform automatically detects and uses `Procfile`:
 2.  **Process Execution:** The platform will typically start one instance of each process type defined in the `Procfile` (`web` and `worker` in this case).
 3.  **Web Routing:** The platform usually routes external HTTP/S traffic automatically to the process designated as `web`.
 4.  **Configuration:** You generally **do not need to specify a "Start Command"** manually if the platform uses the `Procfile`. Configure Environment Variables and any necessary Persistent Storage through your platform's interface.
+    *   **Ensure you configure Persistent Storage (Volumes) for:**
+        *   `/app/db` (for the database)
+        *   `/app/.wwebjs_auth` (for the WhatsApp session)
 5.  **QR Code:** You will need to access the logs for the `worker` process through your platform's logging interface to find and scan the QR code when needed.

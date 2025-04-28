@@ -2,16 +2,14 @@ module.exports = {
   apps : [
     {
       name   : "web",
-      script : "./src/webserver/server.js", // Ruta relativa a la raíz del proyecto
+      script : "./src/webserver/server.js", // Relative path to the project root
       env: {
-        // PORT es gestionado por Coolify/Procfile/Buildpack, no necesita definirse aquí normalmente.
-        // Las demás variables de entorno se establecen en Coolify.
+        // PORT is managed by Coolify/Procfile/Buildpack, it does not need to be defined here normally.
       }
     },
     {
       name   : "worker",
-      script : "./main.js", // Ruta relativa a la raíz del proyecto
-      // No necesita env específicos aquí si usa las variables globales de Coolify
+      script : "./main.js", // Relative path to the project root
     }
   ]
 }; 

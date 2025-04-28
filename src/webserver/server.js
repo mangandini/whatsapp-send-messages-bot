@@ -1,16 +1,16 @@
 const express = require('express');
 const path = require('path');
-const fs = require('fs'); // Necesario para borrar archivos temporales
-const multer = require('multer'); // Para manejar subida de archivos
-const { getDb, initializeDatabase, setCampaignFlag, setStopFlag, getSetting, setSetting, addMessageToOutgoingQueue, deleteOutgoingQueueMessage } = require('../database'); // Importar setCampaignFlag, setStopFlag, getSetting, and setSetting
-const { importContactsFromCSV } = require('../csvImporter'); // Importar la función de importación
+const fs = require('fs'); // Needed to delete temporary files
+const multer = require('multer'); // For handling file uploads
+const { getDb, initializeDatabase, setCampaignFlag, setStopFlag, getSetting, setSetting, addMessageToOutgoingQueue, deleteOutgoingQueueMessage } = require('../database'); // Import setCampaignFlag, setStopFlag, getSetting, and setSetting
+const { importContactsFromCSV } = require('../csvImporter'); // Import the CSV import function
 const { loadConfig } = require('../configLoader'); // For potential future use maybe?
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- Configuración de Multer ---
-const UPLOAD_DIR = path.join(__dirname, '../../uploads'); // Usar ../../ para salir de src/webserver
+// --- Multer Configuration ---
+const UPLOAD_DIR = path.join(__dirname, '../../uploads'); // Use ../../ to exit src/webserver
 if (!fs.existsSync(UPLOAD_DIR)) {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     console.log(`Created upload directory: ${UPLOAD_DIR}`);
@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
         cb(null, UPLOAD_DIR);
     },
     filename: function (req, file, cb) {
-        // Usar un nombre de archivo temporal único
+        // Use a unique temporary file name
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
-        // Aceptar solo archivos CSV
+        // Accept only CSV files
         if (path.extname(file.originalname).toLowerCase() === '.csv') {
             cb(null, true);
         } else {
@@ -37,9 +37,9 @@ const upload = multer({
     }
 });
 
-// Middleware para parsear JSON (si necesitas enviar datos JSON a otras APIs)
+// Middleware to parse JSON (if you need to send JSON data to other APIs)
 app.use(express.json());
-// Middleware para parsear datos de formularios (útil si tienes otros forms)
+// Middleware to parse form data (useful if you have other forms)
 app.use(express.urlencoded({ extended: true }));
 
 // Define keys for settings we expect from the frontend
@@ -70,7 +70,7 @@ async function startServer() {
         // Set the directory for view templates
         app.set('views', path.join(__dirname, 'views'));
 
-        // Servir archivos estáticos (CSS, JS del lado cliente) si los tienes
+        // Serve static files (CSS, JS client side) if you have them
         app.use(express.static(path.join(__dirname, 'public')));
 
         // Middleware to fetch testMode for all routes
@@ -210,62 +210,6 @@ async function startServer() {
             }
         });
 
-        // Route for specific contact details and their messages - DEPRECATED
-        /*
-        app.get('/contacts/:id', async (req, res) => {
-            const contactId = parseInt(req.params.id, 10);
-            if (isNaN(contactId)) {
-                return res.status(400).send('Invalid contact ID.');
-            }
-
-            try {
-                const db = getDb();
-                let contact = null;
-                let messages = [];
-
-                // 1. Get Contact Details
-                const contactSql = "SELECT * FROM contacts WHERE id = ?";
-                contact = await new Promise((resolve, reject) => {
-                    db.get(contactSql, [contactId], (err, row) => {
-                        if (err) {
-                            reject(new Error(`Error fetching contact details: ${err.message}`));
-                        } else {
-                            resolve(row);
-                        }
-                    });
-                });
-
-                if (!contact) {
-                    return res.status(404).send('Contact not found.');
-                }
-
-                // 2. Get Messages for this Contact (Ordered Chronologically)
-                const messagesSql = "SELECT * FROM messages WHERE contact_id = ? ORDER BY created_at ASC";
-                messages = await new Promise((resolve, reject) => {
-                    db.all(messagesSql, [contactId], (err, rows) => {
-                        if (err) {
-                             reject(new Error(`Error fetching messages for contact: ${err.message}`));
-                        } else {
-                            resolve(rows);
-                        }
-                    });
-                });
-
-                // 3. Render the detail view
-                res.render('contact_detail', {
-                    title: `Contact Details - ${contact.name}`,
-                    path: '/contacts',
-                    contact: contact, 
-                    messages: messages
-                });
-
-            } catch (error) {
-                 console.error(`Error fetching details for contact ID ${contactId}:`, error.message);
-                 res.status(500).send("Error retrieving contact information.");
-            }
-        });
-        */
-
         // Route to display messages with contact info
         app.get('/messages', (req, res) => {
             try {
@@ -319,7 +263,7 @@ async function startServer() {
 
         // --- API Routes ---
 
-        // API para preparar la campaña
+        // API to prepare the campaign
         app.post('/api/campaign/prepare', async (req, res) => {
             console.log(`Received request to prepare campaign at ${new Date().toISOString()}`);
             try {
@@ -351,11 +295,11 @@ async function startServer() {
             }
         });
 
-        // API para solicitar la parada de la campaña
+        // API to request the campaign stop
         app.post('/api/campaign/stop', async (req, res) => {
             console.log('Received request to stop campaign...');
             try {
-                await setCampaignFlag('0'); // Cambio: setear directamente campaign_flag a 0 en lugar de usar stop_flag
+                await setCampaignFlag('0'); 
                 console.log('Campaign flag set to 0 in database.' + new Date().toISOString());
                 res.json({ success: true, message: 'Campaign stopped successfully.' });
             } catch (error) {
@@ -364,7 +308,7 @@ async function startServer() {
             }
         });
 
-        // API para importar contactos desde CSV
+        // API to import contacts from CSV
         app.post('/api/contacts/import', upload.single('csvfile'), async (req, res) => {
              console.log('Received request to import contacts...');
              if (!req.file) {
@@ -379,13 +323,13 @@ async function startServer() {
                  console.log('Calling importContactsFromCSV...');
                  const summary = await importContactsFromCSV(filePath);
                  console.log('Import summary:', summary);
-                 // Devolver el resumen de la importación
+                 // Return the import summary
                  res.json({ success: true, message: 'CSV processed.', stats: summary });
              } catch (error) {
                  console.error('Error during CSV import process:', error);
                  res.status(500).json({ success: false, error: `Failed to import CSV: ${error.message}` });
              } finally {
-                 // Asegurarse de borrar el archivo temporal después de procesarlo
+                 // Ensure the temporary file is deleted after processing
                  fs.unlink(filePath, (err) => {
                      if (err) {
                          console.error(`Error deleting temporary file ${filePath}:`, err);
@@ -614,7 +558,7 @@ async function startServer() {
         });
         // *** END NEW API Endpoint ***
 
-        // API para BORRAR un mensaje específico
+        // API to DELETE a specific message
         app.delete('/api/messages/:id', async (req, res) => {
             const messageId = parseInt(req.params.id, 10);
             if (isNaN(messageId)) {
@@ -653,7 +597,7 @@ async function startServer() {
             }
         });
 
-        // API para BORRAR TODOS los contactos
+        // API to DELETE ALL contacts
         app.delete('/api/contacts/all', async (req, res) => {
             console.warn('!!! Received request to DELETE ALL contacts !!!');
             try {

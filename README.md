@@ -8,7 +8,7 @@ An free open-source tool using whatsapp-web.js that turns a plain WhatsApp accou
 ![Main Dashboard](docs/screenshots/screenshot-dash.png)
 
 > [!WARNING]
-> WhatsApp does not allow bots or unofficial clients on their platform, so this shouldn't be considered totally safe. This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with WhatsApp or any of its subsidiaries or its affiliates. The official WhatsApp website can be found at whatsapp.com. "WhatsApp" as well as related names, marks, emblems and images are registered trademarks of their respective owners. Also it is not guaranteed you will not be blocked by using this method. 
+> WhatsApp does not allow bots or unofficial clients on their platform, so this shouldn't be considered totally safe. Also it is not guaranteed you will not be blocked by using this method. This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with WhatsApp or any of its subsidiaries or its affiliates. The official WhatsApp website can be found at whatsapp.com. "WhatsApp" as well as related names, marks, emblems and images are registered trademarks of their respective owners. 
 
 
 ## Features
@@ -102,6 +102,10 @@ This project offers two ways to define its processes for deployment platforms:
 
 1.  **`ecosystem.config.js`:** Uses the PM2 process manager. This is recommended for robustness (auto-restarts, monitoring) and is used in the detailed Coolify instructions.
 2.  **`Procfile`:** A simpler format often used by Heroku-like platforms and standard buildpacks (like Nixpacks or Cloud Native Buildpacks). It defines the `web` and `worker` processes directly.
+
+**Important:** Regardless of the method, most deployment platforms will require you to configure **Persistent Storage** (Volumes) to preserve data between deployments. You must map:
+*   `/app/db` to store the application database (`database.sqlite`).
+*   `/app/.wwebjs_auth` to store the WhatsApp session information, avoiding the need to re-scan the QR code frequently.
 
 Read [deployment.md](docs/deployment.md) to choose the method that best suits your deployment platform:
 
