@@ -4,15 +4,15 @@ Automates sending of personalized messages via WhatsApp.
 ## Overview
 An free open-source tool using whatsapp-web.js that turns a plain WhatsApp account into a lightweight campaign engine. Drop your contacts into the web dashboard, write one template with placeholders like {name}, {phone}, etc and the bot handles the rest—sending each message, spacing them out so you stay under WhatsApp's radar, and even logging every reply. Perfect for makers, community managers, and small teams who need to reach many people without juggling complex or pricey platforms. ​
 
-![Main Dashboard](docs/screenshots/screenshot-dash.png)
 ![Campaign Settings](docs/screenshots/settings-campaign.png)
+![Main Dashboard](docs/screenshots/screenshot-dash.png)
 
 > [!WARNING]
 > WhatsApp does not allow bots or unofficial clients on their platform, so this shouldn't be considered totally safe. This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with WhatsApp or any of its subsidiaries or its affiliates. The official WhatsApp website can be found at whatsapp.com. "WhatsApp" as well as related names, marks, emblems and images are registered trademarks of their respective owners. Also it is not guaranteed you will not be blocked by using this method. 
 
 
 ## Features
-<img src="docs/screenshots/mobile-conversation.png" alt="Conversation view on Mobile phone" height="600" style="float: right;">
+
 * Send personalized messages to multiple contacts using **customizable templates with placeholders**
 * **A Full Web Interface** to manage all features and settings, everything can be done directly from the interface, no terminal needed.
 * **Randomized Greetings/Farewells:** Enhance message variation by defining multiple greetings and farewells within your template. The bot randomly selects one for each message, reducing repetitive patterns and potentially lowering detection risk when sending bulk messages.
@@ -142,10 +142,13 @@ Once deployed and running:
     *   The `worker` also periodically checks the `outgoing_queue` table (based on *Queue Check Interval*) for individual replies entered via the UI and sends them, respecting the *Individual Message Delay*.
 7.  **Monitor:** Use the "Messages" and "Contacts" views in the web UI to see the status and history.
 
-<img src="docs/screenshots/mobile-contacts.png" alt="Contacts View on Mobile" height="600" style="float: right;">
+
 **Note on Failed Individual Replies:**
 
 If an individual reply sent from the Contacts view fails (e.g., invalid number, network issue), the worker process (`main.js`) will log a detailed error to the console. The message record in the `outgoing_queue` table will be updated to `status='FAILED'` and include the error message. The main `messages` table will also log the attempt with `status='FAILED'`.
+
+<img src="docs/screenshots/mobile-contacts.png" alt="Contacts View on Mobile" height="600">
+<img src="docs/screenshots/mobile-conversation.png" alt="Conversation view on Mobile phone" height="600">
 
 
 ## License
