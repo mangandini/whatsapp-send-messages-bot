@@ -1,0 +1,58 @@
+/* Improved table responsiveness */
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Message body cell improvements */
+.message-body-cell { 
+    min-width: 300px;
+    max-width: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .message-body-cell {
+        min-width: 280px;
+    }
+    
+    /* Make timestamp and status columns narrower on mobile */
+    .timestamp-cell {
+        max-width: 95px;
+        font-size: 0.8rem;
+    }
+}
+
+/* General table improvements */
+td, th { 
+    vertical-align: middle;
+    padding: 0.5rem !important; /* Consistent padding */
+}
+
+/* Hover effect for better row distinction */
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,.03);
+}
+
+/* Better badge visibility */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.35em 0.65em;
+}
+
+/* Custom Table Header Styles */
+thead th {
+    background-color: #e9ecef; /* Slightly darker grey background */
+    color: #495057; /* Darker text color for contrast */
+    font-weight: 600; /* Semi-bold */
+    text-transform: uppercase; /* Uppercase text */
+    font-size: 0.85rem; /* Slightly smaller font */
+    border-color: #dee2e6; /* Match border color */
+}
+
+/* Hide search-related elements when no results */
+.search-no-results #message-table {
+    display: none;
+}
+.search-no-results #no-messages-message {
+    display: table-row; /* Show the 'no results' row */
+} 

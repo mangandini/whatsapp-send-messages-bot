@@ -1,0 +1,22 @@
+.test-contact-item { display: flex; justify-content: space-between; align-items: center; }
+.card { height: 100%;} /* Ensure cards in a row have same height */
+/* Custom tab styling */
+.nav-tabs .nav-link {
+    color: var(--bs-secondary-color);
+    border-bottom-width: 2px; /* Thicker bottom border */
+}
+.nav-tabs .nav-link.active {
+    color: var(--bs-success);
+    border-color: var(--bs-success) var(--bs-success) #fff;
+    font-weight: 500;
+}
+.tab-content {
+    border: 1px solid var(--bs-border-color);
+    border-top: 0;
+    padding: 1.5rem;
+    border-radius: 0 0 0.375rem 0.375rem; /* Match Bootstrap card radius */
+}
+.dynamic-list-scroll {
+    max-height: 150px; 
+    overflow-y: auto;
+} 

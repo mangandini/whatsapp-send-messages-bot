@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <!-- Emoji Picker JS -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+</head>
+<body>
+    <!-- Navbar Partial -->
+        <%- include('partials/navbar') %>
+    <!-- Custom Contacts CSS -->
+    <link rel="stylesheet" href="/css/contacts.css">
+
+    <div class="container-fluid mt-0">
+        <div class="row row-full-height">
+            <!-- Contact List Column -->
+            <div class="col-md-5 col-lg-4 px-0" id="contact-list-col">
+                
+                <div class="p-3 border-bottom bg-light">
+                    <input type="search" id="contact-search" class="form-control form-control-sm" placeholder="Search by name or phone...">
+                </div>
+
+                 <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-danger small m-2" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i> <%= error %>
+                    </div>
+                 <% } %>
+
+                <ul id="contact-list">
+        <% if (contacts && contacts.length > 0) { %>
+                        <% contacts.forEach(contact => { %>
+                            <% 
+                            const displayName = contact.full_name || contact.nickname || 'U'; 
+                            const initials = displayName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+                            // Basic hash function for somewhat consistent colors (optional)
+                            let hash = 0;
+                            for (let i = 0; i < displayName.length; i++) {
+                                hash = displayName.charCodeAt(i) + ((hash << 5) - hash);
+                            }
+                            const hue = hash % 360;
+                            const avatarBgColor = `hsl(${hue}, 30%, 60%)`; // Use HSL for variety
+                            %>
+                            <li class="contact-item"
+                                data-id="<%= contact.id %>"
+                                data-name="<%= (contact.nickname || '').toLowerCase() %> <%= (contact.full_name || '').toLowerCase() %>"
+                                data-phone="<%= (contact.phone || '').replace(/\D/g,'') %>"
+                                tabindex="0"
+                                role="button"
+                                aria-label="Select contact <%= contact.full_name || contact.nickname %>">
+                                <div class="avatar" style="background-color: <%= avatarBgColor %>;"><%= initials %></div>
+                                <div class="contact-info">
+                                    <span class="contact-name"><%= contact.full_name || contact.nickname || 'Unknown Contact' %></span>
+                                    <span class="contact-phone"><%= contact.phone || 'No phone' %></span>
+                                </div>
+                                <div class="contact-indicators">
+                                    <span class="indicator-icons">
+                                    <% if (contact.can_contact === 0) { %>
+                                            <i class="bi bi-slash-circle-fill text-danger" title="Do Not Contact"></i>
+                                    <% } else { %>
+                                            <i class="bi bi-check-circle-fill text-success" title="Contact OK"></i>
+                                    <% } %>
+                                     <% if (contact.has_been_contacted === 1) { %>
+                                            <i class="bi bi-send-check-fill text-primary" title="Contacted"></i>
+                                    <% } else { %>
+                                            <i class="bi bi-send text-muted" title="Not Contacted"></i>
+                                    <% } %>
+                                        <% if (contact.import_error_reason) { %>
+                                            <i class="bi bi-exclamation-triangle-fill import-issue-icon" title="Import Issue: <%= contact.import_error_reason %>"></i>
+                                    <% } %>
+                                    </span>
+                                    <span class="badge rounded-pill text-bg-light">
+                                        <i class="bi bi-arrow-down-left"></i> <%= contact.inbound_messages || 0 %> / <i class="bi bi-arrow-up-right"></i> <%= contact.outbound_messages || 0 %>
+                                    </span>
+                                </div>
+                            </li>
+                        <% }); %>
+                    <% } else if (!error) { %>
+                        <li class="text-center text-muted p-3">No contacts found.</li>
+                    <% } %>
+                </ul>
+                <div id="no-contacts-message" class="text-center text-muted p-3" style="display: none;">
+                    No contacts match your search.
+                </div>
+            </div>
+
+            <!-- Conversation Column -->
+            <div class="col-md-7 col-lg-8 px-0" id="conversation-col">
+                <!-- Placeholder shown initially -->
+                <div id="conversation-placeholder">
+                    <div>
+                        <i class="bi bi-chat-left-dots" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Select a contact from the list to view details and conversation history.</p>
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="conversation-loading" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="ms-2 mb-0">Loading conversation...</p>
+                </div>
+
+                <!-- Error Message Area -->
+                 <div id="conversation-error" style="display: none;">
+                     <div>
+                         <i class="bi bi-emoji-frown" style="font-size: 3rem;"></i>
+                        <p class="mt-2"><strong class="d-block">Failed to load conversation.</strong><span id="error-message-text"></span></p>
+                         <button class="btn btn-sm btn-secondary" id="retry-load-btn">Retry</button>
+                    </div>
+                </div>
+
+                <!-- Actual Conversation Content (hidden initially) -->
+                <div id="conversation-content" style="display: none;">
+                    <div id="conversation-header">
+                        <button id="back-to-list-btn" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> <span class="btn-text">Back</span>
+                        </button>
+                        <h5 id="conv-header-name">Contact Name</h5>
+                        <div id="conv-header-actions">
+                            <!-- Action buttons (Details, Activate/Deactivate, Contacted) will be added here by JS -->
+                        </div>
+                    </div>
+                    <div class="chat-container col-lg-8 mx-auto" id="chat-history">
+                        <!-- Message bubbles populated by JS -->
+                    </div>
+                    <!-- Reply Area -->
+                    <div id="reply-area" class="p-3 border-top bg-light mt-auto" style="display: none;"> 
+                        <!-- Emoji Picker Element -->
+                        <emoji-picker class="light"></emoji-picker> 
+                        
+                        <div class="input-group">
+                            <textarea id="reply-message-input" class="form-control form-control-sm" rows="2" placeholder="Type your reply..." aria-label="Reply message input"></textarea>
+                            <!-- Emoji Toggle Button -->
+                            <button id="emoji-toggle-btn" class="btn btn-outline-secondary btn-lg" type="button" title="Select emoji" aria-label="Select emoji">
+                                <i class="bi bi-emoji-smile"></i>
+                            </button>
+                            <button id="send-reply-btn" class="btn btn-primary btn-sm" type="button" aria-label="Send reply">
+                                <i class="bi bi-send-fill"></i> Send
+                            </button>
+                        </div>
+                        <div id="reply-status" class="form-text small mt-1"></div>
+                    </div>
+                    <!-- END Reply Area -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+    <!-- Contact Details Modal -->
+    <div class="modal fade" id="contactDetailsModal" tabindex="-1" aria-labelledby="contactDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contactDetailsModalLabel">Contact Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modal-contact-details-body">
+                    <!-- Contact details will be loaded here by JS -->
+                    <p class="text-muted">Loading details...</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End Contact Details Modal -->
+
+    <script>
+        const contactList = document.getElementById('contact-list');
+        const conversationCol = document.getElementById('conversation-col');
+        const placeholder = document.getElementById('conversation-placeholder');
+        const loadingIndicator = document.getElementById('conversation-loading');
+        const errorDisplay = document.getElementById('conversation-error');
+        const errorMessageText = document.getElementById('error-message-text');
+        const retryBtn = document.getElementById('retry-load-btn');
+        const conversationContent = document.getElementById('conversation-content');
+        const convHeaderName = document.getElementById('conv-header-name');
+        const convHeaderActions = document.getElementById('conv-header-actions');
+        const chatHistory = document.getElementById('chat-history');
+        const backBtn = document.getElementById('back-to-list-btn');
+        const searchInput = document.getElementById('contact-search');
+        const noContactsMessage = document.getElementById('no-contacts-message');
+
+        // *** NEW Reply Area Variables ***
+        const replyArea = document.getElementById('reply-area');
+        const replyInput = document.getElementById('reply-message-input');
+        const sendReplyBtn = document.getElementById('send-reply-btn');
+        const replyStatus = document.getElementById('reply-status');
+        // *** NEW Emoji Picker Variables ***
+        const emojiPicker = document.querySelector('emoji-picker');
+        const emojiToggleBtn = document.getElementById('emoji-toggle-btn');
+        // *** END NEW Emoji Picker Variables ***
+        const contactDetailsModal = document.getElementById('contactDetailsModal'); // Modal element
+
+        let currentContactId = null;
+        let currentContactData = null; // Store fetched data for retries/updates
+
+        // --- Helper Functions ---
+
+        // Check if we are likely on a mobile device based on width
+        const isMobileView = () => window.matchMedia("(max-width: 768px)").matches;
+
+        function showPlaceholder() {
+            placeholder.style.display = 'flex';
+            loadingIndicator.style.display = 'none';
+            errorDisplay.style.display = 'none';
+            conversationContent.style.display = 'none';
+        }
+
+        function showLoading() {
+            placeholder.style.display = 'none';
+            loadingIndicator.style.display = 'flex';
+            errorDisplay.style.display = 'none';
+            conversationContent.style.display = 'none';
+        }
+
+        function showError(message, contactIdForRetry) {
+            placeholder.style.display = 'none';
+            loadingIndicator.style.display = 'none';
+            errorDisplay.style.display = 'flex';
+            errorMessageText.textContent = message || 'An unknown error occurred.';
+            conversationContent.style.display = 'none';
+            // Store the ID for the retry button
+            retryBtn.dataset.retryId = contactIdForRetry || '';
+        }
+
+        function hideConversation() {
+            showPlaceholder(); // Go back to placeholder state
+            document.body.classList.remove('mobile-conversation-active');
+            currentContactId = null;
+            // Deselect item in the list
+            const previouslySelected = contactList.querySelector('.contact-item.active');
+            if (previouslySelected) {
+                previouslySelected.classList.remove('active');
+            }
+            // *** Hide and clear reply area ***
+            if (replyArea) replyArea.style.display = 'none'; 
+            if (replyInput) replyInput.value = ''; // Clear input
+            if (replyStatus) replyStatus.textContent = ''; // Clear status
+            // Hide picker when conversation is hidden using class
+            if (emojiPicker) emojiPicker.classList.add('d-none');
+        }
+
+        function showConversation() {
+            placeholder.style.display = 'none';
+            loadingIndicator.style.display = 'none';
+            errorDisplay.style.display = 'none';
+            conversationContent.style.display = 'flex'; // Use flex for column layout
+
+            if (isMobileView()) {
+                document.body.classList.add('mobile-conversation-active');
+            }
+            // *** Show reply area ***
+            if (replyArea) replyArea.style.display = 'block'; 
+        }
+
+        function formatDateTime(isoString) {
+            if (!isoString) return '-';
+            try {
+                // *** FIX: Ensure the timestamp string is parsed as UTC ***
+                // Replace space with 'T' and add 'Z' to treat as UTC
+                const dateUTC = new Date(String(isoString).replace(' ', 'T') + 'Z');
+                // Use locale formatting for better readability
+                return dateUTC.toLocaleString(undefined, { // Let browser decide locale
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                });
+            } catch (e) {
+                return isoString; // Fallback
+            }
+        }
+
+        function createStatusIcon(status) {
+             if (status === 'SENT') return '<i class="bi bi-check" title="Sent"></i>';
+             if (status === 'DELIVERED') return '<i class="bi bi-check-all" title="Delivered"></i>';
+             if (status === 'READ') return '<i class="bi bi-check-all text-primary" title="Read"></i>'; // Blue double check
+             if (status === 'FAILED') return '<i class="bi bi-exclamation-circle-fill text-danger" title="Failed"></i>';
+             return ''; // No icon for inbound or unknown status
+        }
+
+        function renderConversation(data) {
+            currentContactData = data; // Store for later use
+            const { contact, messages } = data;
+
+            // 1. Header
+            convHeaderName.textContent = contact.full_name || contact.nickname || 'Unnamed Contact';
+            convHeaderActions.innerHTML = ''; // Clear previous actions
+
+            // Add Details Button FIRST for consistent order
+            const detailsButton = document.createElement('button');
+            detailsButton.type = 'button';
+            detailsButton.className = 'btn btn-sm btn-outline-secondary';
+            detailsButton.id = 'view-details-btn';
+            detailsButton.title = 'View Contact Details';
+            detailsButton.setAttribute('data-bs-toggle', 'modal');
+            detailsButton.setAttribute('data-bs-target', '#contactDetailsModal');
+            detailsButton.setAttribute('aria-label', 'View contact details');
+            detailsButton.innerHTML = '<i class="bi bi-info-circle"></i> <span class="btn-text">Details</span>';
+            convHeaderActions.appendChild(detailsButton);
+
+            // Add Activate/Deactivate button
+            convHeaderActions.appendChild(createActivateDeactivateButton(contact.id, contact.can_contact));
+            // Add Contacted toggle button
+            convHeaderActions.appendChild(createContactedToggleButton(contact.id, contact.has_been_contacted));
+
+            // 2. Contact Details Bar - REMOVED from here
+            // convContactDetails.innerHTML = ` ... `; // REMOVED
+
+            // 3. Chat History
+            chatHistory.innerHTML = ''; // Clear previous messages
+            if (messages && messages.length > 0) {
+                messages.forEach(msg => {
+                    const bubble = document.createElement('div');
+                    bubble.className = `message-bubble ${msg.direction.toLowerCase()}`;
+                    
+                    const statusIcon = msg.direction === 'OUTBOUND' ? createStatusIcon(msg.status) : '';
+                    
+                    bubble.innerHTML = `
+                        ${msg.message_body || '(No message body)'}
+                        <span class="timestamp">
+                             ${formatDateTime(msg.created_at)} ${statusIcon}
+                        </span>
+                    `;
+                    chatHistory.appendChild(bubble);
+                });
+                // Scroll to the bottom of the chat history
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            } else {
+                chatHistory.innerHTML = '<p class="text-center text-muted mt-3">No message history found for this contact.</p>';
+            }
+
+            showConversation();
+        }
+
+        function createDeactivateButton(contactId) {
+            const button = document.createElement('button');
+            button.className = 'btn btn-sm btn-outline-danger deactivate-btn';
+            button.dataset.id = contactId;
+            button.title = 'Mark as Do Not Contact';
+            button.innerHTML = '<i class="bi bi-slash-circle-fill"></i> <span class="btn-text">Deactivate</span>';
+            button.tabIndex = 0;
+            button.setAttribute('aria-label', `Mark contact ${contactId} as not contactable (Deactivate)`);
+            button.addEventListener('click', handleToggleContactar);
+            return button;
+        }
+
+        function createActivateButton(contactId) {
+            const button = document.createElement('button');
+            button.className = 'btn btn-sm btn-outline-success activate-btn';
+            button.dataset.id = contactId;
+            button.title = 'Reactivate contact (allow contacting)';
+            button.innerHTML = '<i class="bi bi-check-circle-fill"></i> <span class="btn-text">Activate</span>';
+            button.tabIndex = 0;
+            button.setAttribute('aria-label', `Reactivate contact ${contactId} (Allow contact)`);
+            button.addEventListener('click', handleToggleContactar);
+            return button;
+        }
+
+        function createActivateDeactivateButton(contactId, canContactStatusInt) {
+             if (canContactStatusInt === 1) { // If currently contactable (1), show Deactivate button
+                 return createDeactivateButton(contactId);
+             } else { // If currently not contactable (0 or null/undefined), show Activate button
+                 return createActivateButton(contactId);
+             }
+        }
+
+        function updateContactListItemStatus(contactId, newStatusInt) {
+            const listItem = contactList.querySelector(`.contact-item[data-id="${contactId}"]`);
+            if (!listItem) return;
+
+            const indicatorContainer = listItem.querySelector('.indicator-icons');
+            if (!indicatorContainer) return;
+
+            let icon = indicatorContainer.querySelector('.bi-slash-circle-fill, .bi-check-circle-fill');
+            if (icon) {
+                 if (newStatusInt === 0) { // 0 means Do Not Contact
+                    icon.classList.remove('bi-check-circle-fill', 'text-success');
+                    icon.classList.add('bi-slash-circle-fill', 'text-danger');
+                    icon.title = 'Do Not Contact';
+                 } else { // 1 means Contact OK
+                    icon.classList.remove('bi-slash-circle-fill', 'text-danger');
+                    icon.classList.add('bi-check-circle-fill', 'text-success');
+                    icon.title = 'Contact OK';
+                 }
+            }
+             // Update data used for button creation if this contact is re-selected
+             if (currentContactId === contactId && currentContactData) {
+                 // Ensure we store the integer value
+                currentContactData.contact.can_contact = newStatusInt;
+             }
+
+        }
+
+        // --- Functions for Contactado Toggle ---
+        function createMarkAsContactedButton(contactId) {
+            const button = document.createElement('button');
+            button.className = 'btn btn-sm btn-outline-primary ms-2';
+            button.dataset.id = contactId;
+            button.title = 'Mark as Contacted';
+            button.innerHTML = '<i class="bi bi-send-check"></i> <span class="btn-text">Mark Contacted</span>';
+            button.tabIndex = 0;
+            button.setAttribute('aria-label', `Mark contact ${contactId} as already contacted`);
+            button.addEventListener('click', handleToggleContactado);
+            return button;
+        }
+
+        function createMarkAsNotContactedButton(contactId) {
+            const button = document.createElement('button');
+            button.className = 'btn btn-sm btn-outline-secondary ms-2';
+            button.dataset.id = contactId;
+            button.title = 'Mark as Not Yet Contacted';
+            button.innerHTML = '<i class="bi bi-send-slash"></i> <span class="btn-text">Mark Uncontacted</span>';
+            button.tabIndex = 0;
+            button.setAttribute('aria-label', `Mark contact ${contactId} as not contacted`);
+            button.addEventListener('click', handleToggleContactado);
+            return button;
+        }
+
+        function createContactedToggleButton(contactId, hasBeenContactedStatusInt) {
+            if (hasBeenContactedStatusInt === 1) { // If contacted (1), show Mark Uncontacted
+                return createMarkAsNotContactedButton(contactId);
+            } else { // If not contacted (0 or null/undefined), show Mark Contacted
+                return createMarkAsContactedButton(contactId);
+            }
+        }
+
+        function updateContactListItemContactedStatus(contactId, newStatusInt) {
+            const listItem = contactList.querySelector(`.contact-item[data-id="${contactId}"]`);
+            if (!listItem) return;
+
+            const indicatorContainer = listItem.querySelector('.indicator-icons');
+            if (!indicatorContainer) return;
+
+            let icon = indicatorContainer.querySelector('.bi-send-check-fill, .bi-send');
+            if (icon) {
+                if (newStatusInt === 1) { // 1 means Contacted
+                    icon.classList.remove('bi-send', 'text-muted');
+                    icon.classList.add('bi-send-check-fill', 'text-primary');
+                    icon.title = 'Contacted';
+                } else { // 0 means Not Contacted
+                    icon.classList.remove('bi-send-check-fill', 'text-primary');
+                    icon.classList.add('bi-send', 'text-muted');
+                    icon.title = 'Not Contacted';
+                }
+            }
+             // Update data used for button creation if this contact is re-selected
+             if (currentContactId === contactId && currentContactData) {
+                 // Ensure we store the integer value
+                 currentContactData.contact.has_been_contacted = newStatusInt;
+             }
+        }
+
+        // --- Event Handlers ---
+
+        async function handleContactClick(event) {
+            const targetItem = event.target.closest('.contact-item');
+            if (!targetItem) return;
+
+            const contactId = targetItem.dataset.id;
+            if (!contactId || contactId === currentContactId) {
+                // console.log('Same contact clicked or invalid ID');
+                return; // Don't reload if clicking the already active contact
+            }
+
+            // Update selection visually
+            const previouslySelected = contactList.querySelector('.contact-item.active');
+            if (previouslySelected) {
+                previouslySelected.classList.remove('active');
+            }
+            targetItem.classList.add('active');
+
+            currentContactId = contactId;
+            showLoading();
+
+            try {
+                const response = await fetch(`/api/contacts/${contactId}/details`);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: `HTTP error ${response.status}` }));
+                    throw new Error(errorData.error || `HTTP error ${response.status}`);
+                }
+                const data = await response.json();
+                                if (data.success) {
+                    renderConversation(data);
+                } else {
+                    throw new Error(data.error || 'API returned success=false');
+                }
+            } catch (error) {
+                console.error('Error fetching contact details:', error);
+                showError(`Failed to load details for contact ${contactId}. ${error.message}`, contactId);
+            }
+        }
+
+        async function handleToggleContactar(event) {
+            const button = event.currentTarget; // Use currentTarget to ensure we get the button
+            const contactId = button.dataset.id;
+            const isActivating = button.classList.contains('activate-btn');
+            const action = isActivating ? 'activate' : 'deactivate';
+            const confirmationMessage = isActivating 
+                ? `Reactivate this contact (ID: ${contactId}) to allow contacting?` 
+                : `Mark this contact (ID: ${contactId}) as DO NOT CONTACT?`;
+
+            if (!contactId) {
+                console.error('Missing contact ID on button');
+                return;
+            }
+
+            if (confirm(confirmationMessage)) {
+                button.disabled = true;
+                const originalIcon = button.innerHTML;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                try {
+                    const response = await fetch(`/api/contacts/${contactId}/${action}`, { method: 'PATCH' });
+                    const result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                         throw new Error(result.error || `HTTP error ${response.status}`);
+                    }
+
+                    // Success! Update UI
+                    const newButton = createActivateDeactivateButton(contactId, result.can_contact);
+                    button.replaceWith(newButton); // Replace button in the header
+                    updateContactListItemStatus(contactId, result.can_contact); // Update icon in the list
+
+
+                } catch (error) {
+                    console.error(`Error ${action} contact:`, error);
+                    alert(`Error ${action === 'activate' ? 'activating' : 'deactivating'} contact: ${error.message}`);
+                    // Restore button on error
+                    button.innerHTML = originalIcon;
+                    button.disabled = false;
+                }
+            }
+        }
+
+        async function handleToggleContactado(event) {
+            const button = event.currentTarget;
+            const contactId = button.dataset.id;
+            const isMarkingContacted = button.classList.contains('btn-outline-primary'); // Check class to determine action
+            const action = isMarkingContacted ? 'mark_contacted' : 'mark_uncontacted';
+            const endpointAction = 'toggle_contacted'; // Use a single endpoint
+             const confirmationMessage = isMarkingContacted 
+                 ? `Mark this contact (ID: ${contactId}) as CONTACTED?` 
+                 : `Mark this contact (ID: ${contactId}) as NOT CONTACTED?`;
+
+            if (!contactId) {
+                console.error('Missing contact ID on contactado toggle button');
+                return;
+            }
+
+             if (confirm(confirmationMessage)) {
+                 button.disabled = true;
+                 const originalIcon = button.innerHTML;
+                 button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                 try {
+                     // Use a single endpoint, the server will handle the toggle logic
+                    const response = await fetch(`/api/contacts/${contactId}/${endpointAction}`, { method: 'PATCH' });
+                    const result = await response.json();
+
+                     if (!response.ok || !result.success) {
+                          throw new Error(result.error || `HTTP error ${response.status}`);
+                     }
+
+                     // Success! Update UI
+                     const newButton = createContactedToggleButton(contactId, result.has_been_contacted);
+                     button.replaceWith(newButton); // Replace button in the header
+                     updateContactListItemContactedStatus(contactId, result.has_been_contacted); // Update icon in the list
+
+                     // Update stored data if the current contact is the one being modified
+                     if (currentContactId === contactId && currentContactData) {
+                         currentContactData.contact.has_been_contacted = result.has_been_contacted;
+                     }
+
+                 } catch (error) {
+                     console.error(`Error toggling contactado status:`, error);
+                     alert(`Error changing contacted status: ${error.message}`);
+                     // Restore button on error
+                     button.innerHTML = originalIcon;
+                     button.disabled = false;
+                 }
+             }
+         }
+
+        // *** NEW Send Reply Function ***
+        async function sendReply() {
+            const messageBody = replyInput.value.trim();
+            if (!messageBody || !currentContactId) {
+                replyStatus.textContent = 'Please select a contact and enter a message.';
+                replyStatus.className = 'form-text small mt-1 text-danger';
+                return;
+            }
+
+            sendReplyBtn.disabled = true;
+            replyInput.disabled = true;
+            replyStatus.textContent = 'Sending...';
+            replyStatus.className = 'form-text small mt-1 text-muted';
+
+            try {
+                const response = await fetch(`/api/contacts/${currentContactId}/send_message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messageBody: messageBody })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || `HTTP error ${response.status}`);
+                }
+
+                replyStatus.textContent = 'Message queued for sending!';
+                replyStatus.className = 'form-text small mt-1 text-success';
+                replyInput.value = ''; // Clear input on success
+
+                // Optional: Optimistically add to chat history
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble outbound'; // Assuming outbound style
+                bubble.innerHTML = `
+                    ${messageBody} 
+                    <span class="timestamp">
+                        Just now <i class="bi bi-clock text-muted" title="Queued for sending"></i> 
+                    </span>`; 
+                chatHistory.appendChild(bubble);
+                // Scroll to the bottom of the chat history after adding
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                // Clear status message after a few seconds
+                setTimeout(() => { 
+                    if (replyStatus.textContent === 'Message queued for sending!') {
+                       replyStatus.textContent = ''; 
+                    }
+                }, 4000);
+
+            } catch (error) {
+                console.error('Error sending reply:', error);
+                replyStatus.textContent = `Error: ${error.message}`;
+                replyStatus.className = 'form-text small mt-1 text-danger';
+            } finally {
+                sendReplyBtn.disabled = false;
+                replyInput.disabled = false;
+                // Set focus back to input after sending (or error)
+                replyInput.focus(); 
+            }
+        }
+        // *** END NEW Send Reply Function ***
+
+        // Retry Button Logic
+        if (retryBtn) {
+            retryBtn.addEventListener('click', () => {
+                const contactIdToRetry = retryBtn.dataset.retryId;
+                if (contactIdToRetry) {
+                    // Simulate a click on the corresponding contact item
+                    const contactItem = contactList.querySelector(`.contact-item[data-id="${contactIdToRetry}"]`);
+                    if (contactItem) {
+                        contactItem.click();
+                    } else {
+                        showError(`Could not find contact item ${contactIdToRetry} to retry.`);
+                    }
+                } else {
+                   showError('Cannot retry, contact ID not found.');
+                }
+            });
+        }
+
+        // --- Back Button Event Listener ---
+        if (backBtn) {
+            backBtn.addEventListener('click', handleBackToList);
+        }
+
+        // --- Search Input Event Listener ---
+        if (searchInput) {
+            searchInput.addEventListener('input', filterContacts);
+        }
+
+        // --- Initial Setup ---
+        if (contactList) {
+            contactList.addEventListener('click', handleContactClick);
+             // Add keydown listener for accessibility (Enter/Space to select)
+             contactList.addEventListener('keydown', (event) => {
+                 if (event.key === 'Enter' || event.key === ' ') {
+                     const targetItem = event.target.closest('.contact-item');
+                     if (targetItem) {
+                         event.preventDefault(); // Prevent scrolling on space
+                         handleContactClick(event); // Use the same handler
+                     }
+                 }
+             });
+        }
+
+        // --- Modal Event Listener ---
+        if (contactDetailsModal) {
+            contactDetailsModal.addEventListener('show.bs.modal', event => {
+                // Check if currentContactData is available
+                if (currentContactData && currentContactData.contact) {
+                    renderContactDetailsInModal(currentContactData.contact);
+                } else {
+                    // Handle case where data isn't loaded yet (shouldn't happen often)
+                    const modalBody = document.getElementById('modal-contact-details-body');
+                    if (modalBody) {
+                        modalBody.innerHTML = '<p class="text-danger">Error: Contact data not available. Select a contact first.</p>';
+                    }
+                }
+            });
+        }
+        // --- End Modal Event Listener ---
+
+        // *** NEW Emoji Picker Event Listeners ***
+        if (emojiToggleBtn && emojiPicker) {
+            // Toggle picker visibility using class
+            emojiToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent click from immediately closing picker
+                emojiPicker.classList.toggle('d-none');
+                if (!emojiPicker.classList.contains('d-none')) {
+                    // Optional: Focus search within picker if possible/needed
+                    // setTimeout(() => emojiPicker.shadowRoot?.querySelector('input[type="search"]')?.focus(), 0);
+                }
+            });
+
+            // Handle emoji selection
+            emojiPicker.addEventListener('emoji-click', event => {
+                // console.log('Emoji clicked:', event.detail.unicode);
+                if (replyInput) {
+                    insertTextAtCursor(replyInput, event.detail.unicode);
+                }
+                emojiPicker.classList.add('d-none'); // Hide picker after selection using class
+            });
+
+            // Hide picker when clicking outside
+            document.addEventListener('click', (e) => {
+                // Check if picker is visible (doesn't have d-none) before hiding
+                if (!emojiPicker.classList.contains('d-none') && !emojiPicker.contains(e.target) && e.target !== emojiToggleBtn) {
+                    emojiPicker.classList.add('d-none');
+                }
+            });
+        }
+        // *** END NEW Emoji Picker Event Listeners ***
+
+        function handleBackToList() {
+            hideConversation();
+        }
+
+        function filterContacts() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const allContacts = contactList.querySelectorAll('li.contact-item');
+            let visibleCount = 0;
+
+            allContacts.forEach(item => {
+                const name = item.dataset.name || '';
+                const phone = item.dataset.phone || '';
+                const isMatch = name.includes(searchTerm) || phone.includes(searchTerm);
+
+                if (isMatch) {
+                    item.style.display = 'flex'; // Use flex as that's the default display
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Show/hide the "no contacts found" message
+            if (visibleCount === 0 && searchTerm !== '') {
+                noContactsMessage.style.display = 'block';
+            } else {
+                noContactsMessage.style.display = 'none';
+            }
+        }
+
+        // *** NEW Function to insert text at cursor position ***
+        function insertTextAtCursor(textarea, text) {
+            textarea.focus(); // Ensure textarea has focus
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const currentValue = textarea.value;
+            
+            // Insert text
+            textarea.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+            
+            // Move cursor to after inserted text
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        }
+        // *** END NEW Insert Text Function ***
+
+        // *** Existing Reply Area Listeners (sendReplyBtn, replyInput keydown) ***
+        if (sendReplyBtn && replyInput) {
+            console.log("DEBUG: Attaching listener to send button:", sendReplyBtn);
+            sendReplyBtn.addEventListener('click', sendReply);
+            // Allow sending with Ctrl+Enter or Cmd+Enter in textarea
+            replyInput.addEventListener('keydown', (event) => {
+                // ... (keydown logic) ...
+            });
+        }
+        // *** END Existing Reply Area Listeners ***
+
+        // --- New Function to Render Details in Modal ---
+        function renderContactDetailsInModal(contact) {
+            const modalBody = document.getElementById('modal-contact-details-body');
+            if (!modalBody || !contact) {
+                console.error("Modal body or contact data missing for rendering details.");
+                if (modalBody) modalBody.innerHTML = '<p class="text-danger">Error: Could not load contact details.</p>';
+                return; 
+            }
+
+            // Generate HTML for modal body
+            modalBody.innerHTML = `
+                <div class="container-fluid"> 
+                    <div class="row g-3 mb-3"> 
+                        <div class="col-12 col-sm-6">
+                            <strong class="d-block text-muted small mb-1"><i class="bi bi-person-badge-fill me-1"></i>Nickname:</strong>
+                            <span class="fs-6">${contact.nickname || '-'}</span>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <strong class="d-block text-muted small mb-1"><i class="bi bi-person-lines-fill me-1"></i>Full Name:</strong>
+                            <span class="fs-6">${contact.full_name || '-'}</span>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <strong class="d-block text-muted small mb-1"><i class="bi bi-telephone-fill me-1"></i>Phone:</strong>
+                            <span class="fs-6">${contact.phone || '-'}</span>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <strong class="d-block text-muted small mb-1"><i class="bi bi-envelope-fill me-1"></i>Email:</strong>
+                            ${contact.email ? `<a href="mailto:${contact.email}" class="fs-6" aria-label="Send email to ${contact.email}">${contact.email}</a>` : `<span class="fs-6">-</span>`}
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6 d-flex align-items-center">
+                             <i class="bi bi-${contact.can_contact === 1 ? 'check-circle-fill text-success' : 'slash-circle-fill text-danger'} me-2 fs-5" title="${contact.can_contact === 1 ? 'Contact Allowed' : 'Do Not Contact'}"></i>
+                             <div class="fs-6">Can Contact: <span class="badge bg-${contact.can_contact === 1 ? 'success' : 'danger'}-subtle text-${contact.can_contact === 1 ? 'success' : 'danger'}-emphasis rounded-pill ms-1 align-middle">${contact.can_contact === 1 ? 'YES' : 'NO'}</span></div>
+                        </div>
+                         <div class="col-12 col-sm-6 d-flex align-items-center">
+                             <i class="bi bi-${contact.has_been_contacted === 1 ? 'send-check-fill text-primary' : 'send text-secondary'} me-2 fs-5" title="${contact.has_been_contacted === 1 ? 'Has Been Contacted' : 'Not Yet Contacted'}"></i>
+                             <div class="fs-6">Contacted: <span class="badge bg-${contact.has_been_contacted === 1 ? 'primary' : 'secondary'}-subtle text-${contact.has_been_contacted === 1 ? 'primary' : 'secondary'}-emphasis rounded-pill ms-1 align-middle">${contact.has_been_contacted === 1 ? 'YES' : 'NO'}</span></div>
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <h6 class="text-muted mb-3">Custom Fields</h6>
+                    <div class="row g-3 mb-3">
+                         ${[1, 2, 3, 4, 5].map(i => `
+                            <div class="col-12 col-sm-6">
+                                <div class="p-2 bg-light rounded border"> <!-- Added padding, background, rounded corners, and border -->
+                                    <div class="d-flex align-items-baseline"> <!-- Flex container for label + value -->
+                                        <strong class="text-muted small me-2 flex-shrink-0"><i class="bi bi-clipboard-data me-1"></i>Custom ${i}:</strong> <!-- Prevent label from shrinking -->
+                                        <span class="fs-6 text-break">${contact[`custom_field_${i}`] || '-'}</span> <!-- Allow long values to wrap -->
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ${contact.import_error_reason ? `
+                        <hr class="my-3">
+                        <div class="alert alert-warning d-flex align-items-center small mb-0" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                            <div><strong class="me-2">Import Issue:</strong> ${contact.import_error_reason}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        // --- End New Modal Function ---
+
+    </script>
+
+</body>
+</html>

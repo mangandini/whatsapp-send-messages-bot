@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <!-- Custom Messages CSS -->
+    <link rel="stylesheet" href="/css/messages.css">
+    <div class="container-fluid mt-4 h-auto pt-md-4 pt-2">
+        <div class="row justify-content-center">
+            <div class="col-lg-11 col-xl-10">
+
+                <div class="card border-0">
+                    <div class="card-body">
+
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"> 
+                            <h2 class="h5 card-title mb-0 me-auto">Message History</h2>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <div style="min-width: 200px;"> 
+                                    <input type="search" id="message-search" class="form-control form-control-sm" placeholder="Search messages...">
+                                </div>
+                                <div class="btn-group" role="group" aria-label="Filter message direction">
+                                    <a href="/messages" class="btn btn-sm btn-outline-secondary <%= (currentFilter === 'ALL') ? 'active' : '' %>">
+                                        <i class="bi bi-list"></i> <span class="d-none d-md-inline">All</span>
+                                    </a>
+                                    <a href="/messages?direction=INBOUND" class="btn btn-sm btn-outline-success <%= (currentFilter === 'INBOUND') ? 'active' : '' %>">
+                                        <i class="bi bi-arrow-down-left"></i> <span class="d-none d-md-inline">Inbound</span>
+                                    </a>
+                                    <a href="/messages?direction=OUTBOUND" class="btn btn-sm btn-outline-primary <%= (currentFilter === 'OUTBOUND') ? 'active' : '' %>">
+                                        <i class="bi bi-arrow-up-right"></i> <span class="d-none d-md-inline">Outbound</span>
+                                    </a>
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="window.location.reload();">
+                                    <i class="bi bi-arrow-clockwise"></i> <span class="d-none d-lg-inline">Refresh</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <% if (messages && messages.length > 0) { %>
+                            <div class="table-responsive mb-3">
+                                <table id="message-table" class="table table-striped table-hover table-sm align-middle">
+                                    <thead>
+                                        <tr class="bg-light text-secondary fw-semibold text-uppercase small">
+                                            <th class="timestamp-cell">Timestamp</th>
+                                            <th>Direction</th>
+                                            <th>Contact</th>
+                                            <th>Phone</th>
+                                            <th>Status</th>
+                                            <th>Type</th>
+                                            <th class="text-nowrap">Message Body</th>
+                                            <th class="actions-cell">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% messages.forEach(msg => { %>
+                                            <tr data-searchable-content="<%= ( (msg.contact_name || '') + ' ' + (msg.phone || '') + ' ' + (msg.message_body || '') ).toLowerCase() %>">
+                                                <% const createdAtDate = new Date((msg.created_at || '').replace(' ', 'T') + 'Z'); %>
+                                                <td class="timestamp-cell"><small><%= createdAtDate.toLocaleString() %></small></td>
+                                                <td>
+                                                    <div class="badge-stack d-inline-flex flex-column gap-1 align-items-start">
+                                                        <% if (msg.direction === 'OUTBOUND') { %>
+                                                            <span class="badge bg-primary">OUTBOUND <i class="bi bi-arrow-up-right"></i></span>
+                                                        <% } else { %>
+                                                            <span class="badge bg-success">INBOUND <i class="bi bi-arrow-down-left"></i></span>
+                                                        <% } %>
+                                                    </div>
+                                                </td>
+                                                <td class="contact-cell">
+                                                    <% if (msg.contact_id) { %>
+                                                            <%= msg.contact_name || ('Contact ' + msg.contact_id) %>
+                                                    <% } else { %>
+                                                        <%= 'Unknown' %>
+                                                    <% } %>
+                                                </td>
+                                                <td class="phone-cell"><%= msg.phone %></td>
+                                                <td>
+                                                    <div class="badge-stack d-inline-flex flex-column gap-1 align-items-start">
+                                                        <% 
+                                                        let statusClass = 'bg-secondary';
+                                                        if (msg.status === 'SENT') statusClass = 'bg-info';
+                                                        else if (msg.status === 'DELIVERED') statusClass = 'bg-primary';
+                                                        else if (msg.status === 'READ') statusClass = 'bg-success';
+                                                        else if (msg.status === 'FAILED') statusClass = 'bg-danger';
+                                                        %>
+                                                        <span class="badge <%= statusClass %>"><%= msg.status %></span>
+                                                    </div>
+                                                </td>
+                                                <td><%= msg.message_type %></td>
+                                                <td class="message-body-cell text-wrap"><%- msg.message_body %></td>
+                                                <td class="actions-cell">
+                                                    <button class="btn btn-danger btn-sm delete-message-btn"
+                                                            data-message-id="<%= msg.id %>" 
+                                                            title="Delete message <%= msg.id %>">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                        <tr id="no-messages-message" style="display: none;">
+                                            <td colspan="8" class="text-center text-muted">No messages match your search criteria.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <div class="alert alert-info" role="alert">
+                                No messages found in the database.
+                            </div>
+                        <% } %>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div> <!-- /container-fluid -->
+
+    <!-- Bootstrap JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+    <script>
+        // --- Delete Message Logic ---
+        const messageTableBody = document.querySelector('#message-table tbody');
+        const messageSearchInput = document.getElementById('message-search');
+        const noMessagesRow = document.getElementById('no-messages-message');
+        const tableContainer = document.querySelector('.table-responsive'); // Or the card body
+
+        if (messageTableBody) {
+            messageTableBody.addEventListener('click', async (event) => {
+                const deleteButton = event.target.closest('.delete-message-btn');
+
+                if (!deleteButton) {
+                    return; // Click wasn't on a delete button or its icon
+                }
+
+                const messageId = deleteButton.dataset.messageId;
+                if (!messageId) {
+                    console.error('Could not find message ID on button.');
+                    return;
+                }
+
+                const messagePreview = deleteButton.closest('tr')?.querySelector('.message-body-cell')?.textContent.substring(0, 50) + '...';
+                const confirmDelete = window.confirm(`Are you sure you want to delete message ${messageId}?\n\nPreview: "${messagePreview}"`);
+
+                if (confirmDelete) {
+                    // Disable button temporarily
+                    deleteButton.disabled = true;
+                    const originalIcon = deleteButton.innerHTML;
+                    deleteButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                    try {
+                        const response = await fetch(`/api/messages/${messageId}`, {
+                            method: 'DELETE'
+                        });
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            // Remove the table row on success
+                            deleteButton.closest('tr').remove();
+                            // Optional: Show a success toast/alert here
+                            console.log(`Message ${messageId} deleted successfully.`);
+                        } else {
+                            // Show error message
+                            alert(`Error deleting message: ${result.error || 'Unknown error'}`);
+                            // Re-enable button on failure
+                            deleteButton.disabled = false;
+                            deleteButton.innerHTML = originalIcon;
+                        }
+                    } catch (error) {
+                        console.error('Network error during message deletion:', error);
+                        alert(`Network error: ${error.message}`);
+                        // Re-enable button on network error
+                        deleteButton.disabled = false;
+                        deleteButton.innerHTML = originalIcon;
+                    }
+                }
+            });
+        }
+
+        // --- Search/Filter Logic ---
+        function filterMessages() {
+            const searchTerm = messageSearchInput.value.toLowerCase().trim();
+            const rows = messageTableBody.querySelectorAll('tr[data-searchable-content]');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const content = row.dataset.searchableContent || '';
+                const isMatch = content.includes(searchTerm);
+
+                if (isMatch) {
+                    row.style.display = ''; // Show row (reset to default table display)
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none'; // Hide row
+                }
+            });
+
+            // Toggle the visibility of the "no results" message and table
+            if (visibleCount === 0 && searchTerm !== '' && rows.length > 0) { // Only show if rows exist but are hidden by search
+                noMessagesRow.style.display = 'table-row';
+            } else {
+                noMessagesRow.style.display = 'none';
+            }
+        }
+
+        if (messageSearchInput) {
+            messageSearchInput.addEventListener('input', filterMessages);
+        }
+    </script>
+
+</body>
+</html> 

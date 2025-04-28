@@ -1,0 +1,10 @@
+node_modules/
+.env
+.wwebjs_auth/
+.wwebjs_cache/
+
+#Several files and directories#
+uploads/
+db/*.sqlite
+db/database.csv
+prd-documentation/*

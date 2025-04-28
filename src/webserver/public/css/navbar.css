@@ -1,0 +1,60 @@
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+}
+.navbar:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.navbar-nav .nav-link {
+    position: relative;
+    transition: color 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+}
+.navbar-nav .nav-link:hover {
+    color: var(--bs-success);
+}
+.navbar-nav .nav-link.active {
+    color: var(--bs-success);
+    background-color: rgba(25, 135, 84, 0.1);
+}
+.navbar-nav .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 2px;
+    background-color: var(--bs-success);
+    border-radius: 2px;
+}
+.navbar-brand {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.navbar-brand i {
+    font-size: 1.25rem;
+}
+
+/* Mode badge styles */
+.navbar-brand .badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+@media (max-width: 991.98px) {
+    .navbar-nav .nav-link {
+        padding: 0.75rem 1rem;
+        margin: 0.25rem 0;
+    }
+    .navbar-nav .nav-link.active::after {
+        left: 0;
+        transform: none;
+        width: 4px;
+        height: 100%;
+        top: 0;
+    }
+} 

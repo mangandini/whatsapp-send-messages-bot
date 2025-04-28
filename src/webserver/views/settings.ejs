@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <!-- Custom Settings CSS -->
+    <link rel="stylesheet" href="/css/settings.css">
+    <div class="container-fluid mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-9">
+
+                <!-- Page Title -->
+                <h1 class="h3 mb-4"><i class="bi bi-gear-fill me-2"></i>Application Settings</h1>
+
+                <!-- Feedback Area -->
+                <div id="settings-feedback" class="alert mb-4" role="alert" style="display: none;"></div>
+
+                <!-- Tab Navigation -->
+                <nav>
+                    <div class="nav nav-tabs mb-0" id="settings-tab" role="tablist">
+                        <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general-tab-pane" type="button" role="tab" aria-controls="general-tab-pane" aria-selected="true">
+                            <i class="bi bi-sliders me-1"></i> General
+                        </button>
+                        <button class="nav-link" id="message-tab" data-bs-toggle="tab" data-bs-target="#message-tab-pane" type="button" role="tab" aria-controls="message-tab-pane" aria-selected="false">
+                           <i class="bi bi-envelope-paper me-1"></i> Campaign Message
+                        </button>
+                        <button class="nav-link" id="import-tab" data-bs-toggle="tab" data-bs-target="#import-tab-pane" type="button" role="tab" aria-controls="import-tab-pane" aria-selected="false">
+                            <i class="bi bi-cloud-upload me-1"></i> Import Contacts
+                        </button>
+                        <button class="nav-link" id="danger-tab" data-bs-toggle="tab" data-bs-target="#danger-tab-pane" type="button" role="tab" aria-controls="danger-tab-pane" aria-selected="false">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Danger Zone
+                        </button>
+                    </div>
+                </nav>
+
+                <!-- Tab Content -->
+                <div class="tab-content mb-4" id="settings-tabContent">
+                    <!-- General Settings Tab -->
+                    <div class="tab-pane fade show active" id="general-tab-pane" role="tabpanel" aria-labelledby="general-tab" tabindex="0">
+                        <h2 class="h5 mb-4">General Application Settings</h2>
+                        <!-- Test Mode and Test Contacts Row -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-4 mb-md-0">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="card-title h6"><i class="bi bi-toggles me-2"></i>Test Mode</h3>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="testModeSwitch" aria-describedby="testModeHelp">
+                                            <label class="form-check-label" for="testModeSwitch">Enable Test Mode</label>
+                                        </div>
+                                        <p id="testModeHelp" class="form-text small">When enabled, messages are only sent to the 'Test Contacts' listed in the proper section, and the database is not updated.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body d-flex flex-column">
+                                        <h3 class="card-title h6"><i class="bi bi-person-vcard me-2"></i>Test Contacts</h3>
+                                        <p class="form-text small">List of phone numbers (must start with +) to send messages to when Test Mode is enabled.</p>
+                                        <ul id="testContactsList" class="list-group mb-3 flex-grow-1 dynamic-list-scroll">
+                                            <li class="list-group-item text-muted">Loading...</li>
+                                        </ul>
+                                        <form id="addTestContactForm" class="row g-2 align-items-end">
+                                            <div class="col">
+                                                <label for="newTestContactPhone" class="form-label visually-hidden">Phone Number</label>
+                                                <input type="text" class="form-control form-control-sm" id="newTestContactPhone" placeholder="Phone (+123...)" required pattern="\+\d{5,}" title="Must start with + followed by at least 5 digits">
+                                            </div>
+                                            <div class="col-auto">
+                                                <button type="submit" class="btn btn-primary btn-sm w-100" aria-label="Add Test Contact">
+                                                    <i class="bi bi-plus-lg"></i> Add
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- NEW Log Unknown Senders Row -->
+                        <div class="row mb-4">
+                             <div class="col-12">
+                                 <div class="card">
+                                     <div class="card-body">
+                                         <h3 class="card-title h6"><i class="bi bi-question-circle me-2"></i>Incoming Message Logging</h3>
+                                         <div class="form-check form-switch mb-0">
+                                             <input class="form-check-input" type="checkbox" role="switch" id="logUnknownSendersSwitch" aria-describedby="logUnknownHelp">
+                                             <label class="form-check-label" for="logUnknownSendersSwitch">Log messages from unknown senders</label>
+                                         </div>
+                                         <p id="logUnknownHelp" class="form-text small mt-1 mb-0">If disabled, incoming messages from phone numbers not found in your contacts database will be ignored and not saved.</p>
+                                     </div>
+                                 </div>
+                             </div>
+                        </div>
+                        <!-- Campaign Sending Parameters Row -->
+                        <div class="row mt-4">
+                            <h3 class="h6 mb-3 border-top pt-3">Campaign Sending Parameters</h3>
+                            <div class="col-md-6 col-lg-4 mb-4"> <!-- Adjusted column size -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <label for="batchSizeInput" class="form-label">Campaign Batch Size</label>
+                                        <input type="number" class="form-control" id="batchSizeInput" min="1" step="1" value="5" required aria-describedby="batchSizeHelp" onkeydown="return event.keyCode !== 190 && event.keyCode !== 110" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 0) this.value = parseInt(this.value);">
+                                        <div id="batchSizeHelp" class="form-text small">Number of contacts processed together when sending a **campaign**.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4"> <!-- Adjusted column size -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <label for="delaySecondsInput" class="form-label">Campaign Delay (sec)</label>
+                                        <input type="number" class="form-control" id="delaySecondsInput" min="1" step="1" value="30" required aria-describedby="delaySecondsHelp" onkeydown="return event.keyCode !== 190 && event.keyCode !== 110" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 0) this.value = parseInt(this.value);">
+                                        <div id="delaySecondsHelp" class="form-text small">Wait time between sending **campaign** messages to contacts.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4"> <!-- Adjusted column size -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <label for="retryAttemptsInput" class="form-label">Campaign Retries</label>
+                                        <input type="number" class="form-control" id="retryAttemptsInput" min="0" step="1" value="3" required aria-describedby="retryAttemptsHelp" onkeydown="return event.keyCode !== 190 && event.keyCode !== 110" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 0) this.value = parseInt(this.value);">
+                                        <div id="retryAttemptsHelp" class="form-text small">Max retries if sending a **campaign** message fails (0 = no retries).</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Individual Message Delay moved to next section -->
+                        </div>
+                        <!-- Individual Reply Sending Parameters Row -->
+                        <div class="row">
+                             <h3 class="h6 mb-3 border-top pt-3">Individual Reply Sending Parameters</h3>
+                             <!-- Individual Message Delay (Moved Here) -->
+                             <div class="col-md-6 col-lg-4 mb-4"> <!-- Adjusted column size -->
+                                 <div class="card">
+                                     <div class="card-body">
+                                         <label for="individualMessageDelaySecondsInput" class="form-label">Individual Msg Delay (sec)</label>
+                                         <input type="number" class="form-control" id="individualMessageDelaySecondsInput" min="0" step="1" value="5" required aria-describedby="individualDelayHelp" onkeydown="return event.keyCode !== 190 && event.keyCode !== 110" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 0) this.value = parseInt(this.value);">
+                                         <div id="individualDelayHelp" class="form-text small">Wait time before sending **individual replies** from the queue (0 = send immediately).</div>
+                                     </div>
+                                 </div>
+                             </div>
+                             <!-- Queue Check Interval -->
+                             <div class="col-md-6 col-lg-4 mb-4"> <!-- Adjusted column size -->
+                                 <div class="card">
+                                     <div class="card-body">
+                                         <label for="queueCheckIntervalSecondsInput" class="form-label">Queue Check Interval (sec)</label>
+                                         <input type="number" class="form-control" id="queueCheckIntervalSecondsInput" min="5" step="1" value="10" required aria-describedby="queueIntervalHelp" onkeydown="return event.keyCode !== 190 && event.keyCode !== 110" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 0) this.value = parseInt(this.value);">
+                                         <div id="queueIntervalHelp" class="form-text small">How often the worker checks for **individual replies** to send (min 5s).</div>
+                                     </div>
+                                 </div>
+                             </div>
+                             <!-- Placeholder Column (for 3-column layout consistency) -->
+                             <div class="col-md-6 col-lg-4 mb-4">
+                                 
+                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Campaign Message Settings Tab -->
+                    <div class="tab-pane fade" id="message-tab-pane" role="tabpanel" aria-labelledby="message-tab" tabindex="0">
+                        <h2 class="h5 mb-4">Campaign Message Content</h2>
+                        <div class="row">
+                            <!-- Main Message -->
+                            <div class="col-12 mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <label for="mainMessageInput" class="form-label fw-bold">Main Message Body</label>
+                                        <textarea class="form-control" id="mainMessageInput" rows="5" placeholder="Enter the main body of your campaign message here. Use placeholders like {nickname} for personalization." required aria-describedby="mainMessageHelp"></textarea>
+                                        <div id="mainMessageHelp" class="form-text small">This is the core message sent to contacts. Placeholders like `{nickname}`, `{full_name}`, `{email}`, `{custom_field_1}`... `{custom_field_5}` will be replaced with the contact's data.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Greetings -->
+                            <div class="col-md-6 mb-4 mb-md-0">
+                                <div class="card">
+                                    <div class="card-body d-flex flex-column">
+                                        <h3 class="card-title h6 fw-bold">Greetings <small class="text-muted">(One randomly selected)</small></h3>
+                                        <p class="form-text small">Enter possible greetings. Use placeholders like `{nickname}` for personalization.</p>
+                                        <ul id="greetingsList" class="list-group mb-3 flex-grow-1 dynamic-list-scroll">
+                                            <li class="list-group-item text-muted">Loading...</li>
+                                        </ul>
+                                        <form id="addGreetingForm" class="row g-2 align-items-end">
+                                            <div class="col">
+                                                <label for="newGreetingText" class="form-label visually-hidden">New Greeting</label>
+                                                <input type="text" class="form-control form-control-sm" id="newGreetingText" placeholder="Add a greeting...">
+                                            </div>
+                                            <div class="col-auto">
+                                                <button type="submit" class="btn btn-secondary btn-sm w-100" aria-label="Add Greeting">
+                                                    <i class="bi bi-plus-lg"></i> Add
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Farewells -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body d-flex flex-column">
+                                        <h3 class="card-title h6 fw-bold">Farewells <small class="text-muted">(One randomly selected)</small></h3>
+                                        <p class="form-text small">Enter possible closing remarks. Use placeholders like `{custom_field_1}` for personalization.</p>
+                                        <ul id="farewellsList" class="list-group mb-3 flex-grow-1 dynamic-list-scroll">
+                                            <li class="list-group-item text-muted">Loading...</li>
+                                        </ul>
+                                        <form id="addFarewellForm" class="row g-2 align-items-end">
+                                            <div class="col">
+                                                <label for="newFarewellText" class="form-label visually-hidden">New Farewell</label>
+                                                <input type="text" class="form-control form-control-sm" id="newFarewellText" placeholder="Add a farewell...">
+                                            </div>
+                                            <div class="col-auto">
+                                                <button type="submit" class="btn btn-secondary btn-sm w-100" aria-label="Add Farewell">
+                                                    <i class="bi bi-plus-lg"></i> Add
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Import Contacts Tab -->
+                    <div class="tab-pane fade" id="import-tab-pane" role="tabpanel" aria-labelledby="import-tab" tabindex="0">
+                        <h2 class="h5 mb-4">Import Contacts</h2>
+                        <div class="row">
+                            <div class="col-lg-7">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="h6 mb-3">Import from CSV</h3>
+                                        <form id="import-form" enctype="multipart/form-data" class="mb-3">
+                                            <div class="mb-3">
+                                                <label for="csvfile" class="form-label text-muted">Select CSV file to import:</label>
+                                                <input class="form-control" type="file" id="csvfile" name="csvfile" accept=".csv" required>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="bi bi-upload"></i> Import Contacts
+                                                </button>
+                                            </div>
+                                        </form>
+                                        <div class="mt-3">
+                                            <div id="import-feedback" class="alert" role="alert" style="display: none;"></div>
+                                            <div id="import-status" class="text-muted small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="h6 mb-3">Import Guidelines</h3>
+                                        <div class="alert alert-info mb-3">
+                                            <h4 class="h6 mb-2">Required CSV Format:</h4>
+                                            <p>Check sample-import.csv in documentation folder for an example of the required format.</p>
+                                            <ul class="mb-0 small">
+                                                <li><strong>nickname</strong> (required)</li>
+                                                <li><strong>phone</strong> (with international prefix, e.g., +1234...)</li>
+                                                <li><strong>full_name</strong></li>
+                                                <li><strong>email</strong></li>
+                                                <li><strong>can_contact</strong> (TRUE/FALSE, 1/0, YES/NO)</li>
+                                                <li><strong>custom_field_1</strong> to <strong>custom_field_5</strong></li>
+                                            </ul>
+                                            
+                                        </div>
+                                        <div class="alert alert-warning mb-0">
+                                            <h4 class="h6 mb-2">Important Notes:</h4>
+                                            <ul class="mb-0 small">
+                                                <li>Phone numbers must include country code with + prefix</li>
+                                                <li>Invalid phone numbers will be imported but marked as non-contactable</li>
+                                                <li>Duplicate phone numbers will be skipped</li>
+                                                <li>Missing nickname will cause row to be skipped</li>
+                                                <li>Missing phone number will cause row to be skipped</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone Tab -->
+                    <div class="tab-pane fade" id="danger-tab-pane" role="tabpanel" aria-labelledby="danger-tab" tabindex="0">
+                        <h2 class="h5 mb-4 text-danger">Danger Zone</h2>
+                        <div class="card border-danger mb-4"> <!-- Added mb-4 for spacing -->
+                            <div class="card-body">
+                                <h3 class="card-title h6 text-danger"><i class="bi bi-trash-fill me-1"></i>Delete All Contacts</h3>
+                                <p class="card-text">This action will permanently delete <strong>ALL</strong> contacts from the database. This cannot be undone and may affect ongoing campaigns.</p>
+                                <button id="delete-all-contacts-btn" class="btn btn-danger">
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" style="display: none;"></span>
+                                    <i class="bi bi-trash-fill"></i> Delete All Contacts
+                                </button>
+                            </div>
+                        </div>
+                        <!-- New Card for Deleting Messages -->
+                        <div class="card border-danger">
+                            <div class="card-body">
+                                <h3 class="card-title h6 text-danger"><i class="bi bi-envelope-dash-fill me-1"></i>Delete All Messages</h3>
+                                <p class="card-text">This action will permanently delete <strong>ALL</strong> message history (both sent and received) from the database. This cannot be undone.</p>
+                                <button id="delete-all-messages-btn" class="btn btn-danger" aria-label="Delete All Messages">
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" style="display: none;"></span>
+                                    <i class="bi bi-envelope-dash-fill"></i> Delete All Messages
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button (Outside Tabs) -->
+                <div class="mt-4 mb-5 text-end">
+                    <button id="saveSettingsBtn" class="btn btn-success btn-lg">
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" style="display: none;"></span>
+                        <i class="bi bi-check-lg"></i> Save All Settings
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div> <!-- /container-fluid -->
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+    <!-- Settings Page JS -->
+    <script>
+        // --- DOM Elements ---
+        // General Tab
+        const testModeSwitch = document.getElementById('testModeSwitch');
+        const testContactsList = document.getElementById('testContactsList');
+        const addForm = document.getElementById('addTestContactForm');
+        const phoneInput = document.getElementById('newTestContactPhone');
+        const batchSizeInput = document.getElementById('batchSizeInput');
+        const delaySecondsInput = document.getElementById('delaySecondsInput');
+        const retryAttemptsInput = document.getElementById('retryAttemptsInput');
+        // NEW Log Unknown Senders Switch
+        const logUnknownSendersSwitch = document.getElementById('logUnknownSendersSwitch');
+        // NEW General Tab elements
+        const queueCheckIntervalSecondsInput = document.getElementById('queueCheckIntervalSecondsInput');
+        const individualMessageDelaySecondsInput = document.getElementById('individualMessageDelaySecondsInput');
+        // Message Tab
+        const mainMessageInput = document.getElementById('mainMessageInput');
+        const greetingsList = document.getElementById('greetingsList');
+        const addGreetingForm = document.getElementById('addGreetingForm');
+        const newGreetingInput = document.getElementById('newGreetingText');
+        const farewellsList = document.getElementById('farewellsList');
+        const addFarewellForm = document.getElementById('addFarewellForm');
+        const newFarewellInput = document.getElementById('newFarewellText');
+        // Danger Zone Tab
+        const deleteAllBtn = document.getElementById('delete-all-contacts-btn');
+        const deleteAllSpinner = deleteAllBtn?.querySelector('.spinner-border'); 
+        // NEW Danger Zone elements
+        const deleteAllMessagesBtn = document.getElementById('delete-all-messages-btn');
+        const deleteAllMessagesSpinner = deleteAllMessagesBtn?.querySelector('.spinner-border');
+        // Common
+        const saveBtn = document.getElementById('saveSettingsBtn');
+        const saveSpinner = saveBtn.querySelector('.spinner-border');
+        const feedbackDiv = document.getElementById('settings-feedback');
+
+        // --- State Variables ---
+        let currentTestContacts = []; 
+        let currentGreetings = [];
+        let currentFarewells = [];
+        let currentMainMessage = '';
+        let currentBatchSize = 5;
+        let currentDelaySeconds = 30;
+        let currentRetryAttempts = 3;
+        let currentTestMode = false;
+        // NEW Log Unknown Senders State
+        let currentLogUnknownSenders = true; // Default to true
+        // NEW state variables
+        let currentQueueCheckIntervalSeconds = 10;
+        let currentIndividualMessageDelaySeconds = 5;
+
+        // --- Functions ---
+        function displayFeedback(message, isError = false) {
+            feedbackDiv.textContent = message;
+            feedbackDiv.className = `alert mb-4 ${isError ? 'alert-danger' : 'alert-success'}`;
+            feedbackDiv.style.display = 'block';
+            feedbackDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function hideFeedback() {
+            feedbackDiv.style.display = 'none';
+        }
+
+        function renderTestContacts() {
+            testContactsList.innerHTML = ''; // Clear list
+            if (currentTestContacts.length === 0) {
+                testContactsList.innerHTML = '<li class="list-group-item list-group-item-sm text-muted">No test contacts defined.</li>';
+                return;
+            }
+            currentTestContacts.sort();
+            currentTestContacts.forEach((phone, index) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item list-group-item-sm test-contact-item';
+                const textSpan = document.createElement('span');
+                textSpan.textContent = phone; 
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn btn-outline-danger btn-sm remove-contact-btn';
+                removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                removeBtn.setAttribute('aria-label', `Remove ${phone}`);
+                removeBtn.dataset.index = index; 
+                removeBtn.dataset.type = 'testContact'; // Add type for delegation
+                li.appendChild(textSpan);
+                li.appendChild(removeBtn);
+                testContactsList.appendChild(li);
+            });
+        }
+
+        function renderDynamicList(listElement, dataArray, listType) {
+            listElement.innerHTML = ''; // Clear list
+            if (dataArray.length === 0) {
+                listElement.innerHTML = `<li class="list-group-item list-group-item-sm text-muted">No ${listType} defined.</li>`;
+                return;
+            }
+            dataArray.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item list-group-item-sm d-flex justify-content-between align-items-center';
+                const textSpan = document.createElement('span');
+                textSpan.textContent = item;
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn btn-outline-danger btn-sm remove-dynamic-item-btn';
+                removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                removeBtn.setAttribute('aria-label', `Remove ${listType} item`);
+                removeBtn.dataset.index = index;
+                removeBtn.dataset.type = listType; // Store type (greeting/farewell)
+                li.appendChild(textSpan);
+                li.appendChild(removeBtn);
+                listElement.appendChild(li);
+            });
+        }
+
+        async function loadSettings() {
+            hideFeedback();
+            saveBtn.disabled = true; 
+            // Show loading states only on first load maybe?
+            testContactsList.innerHTML = '<li class="list-group-item text-muted"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...</li>';
+            greetingsList.innerHTML = '<li class="list-group-item text-muted"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...</li>';
+            farewellsList.innerHTML = '<li class="list-group-item text-muted"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...</li>';
+            mainMessageInput.value = 'Loading...';
+            mainMessageInput.disabled = true;
+
+            try {
+                const response = await fetch('/api/settings');
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({})); 
+                    throw new Error(`Failed to fetch settings: ${response.statusText} ${errorData.error || ''}`.trim());
+                }
+                const data = await response.json();
+                if (data.success && data.settings) {
+                    // Update state variables
+                    currentTestMode = data.settings.testMode;
+                    currentTestContacts = Array.isArray(data.settings.testContacts) ? data.settings.testContacts : [];
+                    currentBatchSize = data.settings.batchSize ?? 5; 
+                    currentDelaySeconds = data.settings.delaySeconds ?? 30;
+                    currentRetryAttempts = data.settings.retryAttempts ?? 3;
+                    currentMainMessage = data.settings.message_main ?? '';
+                    currentGreetings = Array.isArray(data.settings.message_greetings) ? data.settings.message_greetings : [];
+                    currentFarewells = Array.isArray(data.settings.message_farewells) ? data.settings.message_farewells : [];
+                    // NEW: Update state for new settings
+                    currentQueueCheckIntervalSeconds = data.settings.queueCheckIntervalSeconds ?? 10;
+                    currentIndividualMessageDelaySeconds = data.settings.individualMessageDelaySeconds ?? 5;
+                    // NEW: Update log_unknown_senders state
+                    currentLogUnknownSenders = (data.settings.log_unknown_senders ?? '1') === '1';
+
+                    // Update UI elements from state
+                    testModeSwitch.checked = currentTestMode;
+                    batchSizeInput.value = currentBatchSize;
+                    delaySecondsInput.value = currentDelaySeconds;
+                    retryAttemptsInput.value = currentRetryAttempts;
+                    mainMessageInput.value = currentMainMessage;
+                    mainMessageInput.disabled = false;
+                    renderTestContacts(); 
+                    renderDynamicList(greetingsList, currentGreetings, 'greeting'); 
+                    renderDynamicList(farewellsList, currentFarewells, 'farewell'); 
+                    // NEW: Update UI for new settings
+                    queueCheckIntervalSecondsInput.value = currentQueueCheckIntervalSeconds;
+                    individualMessageDelaySecondsInput.value = currentIndividualMessageDelaySeconds;
+                    // NEW: Update log_unknown_senders switch UI
+                    logUnknownSendersSwitch.checked = currentLogUnknownSenders;
+                } else {
+                    throw new Error(data.error || 'Failed to load settings data.');
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                displayFeedback(`Error loading settings: ${error.message}`, true);
+                 testContactsList.innerHTML = '<li class="list-group-item text-danger">Error loading test contacts.</li>';
+                 greetingsList.innerHTML = '<li class="list-group-item text-danger">Error loading greetings.</li>';
+                 farewellsList.innerHTML = '<li class="list-group-item text-danger">Error loading farewells.</li>';
+                 mainMessageInput.value = 'Error loading message.';
+                 mainMessageInput.disabled = true; 
+            } finally {
+                saveBtn.disabled = false; 
+            }
+        }
+
+        async function saveSettings() {
+            hideFeedback();
+
+            // --- Validation --- 
+            const validateInput = (input, name, min) => {
+                 const value = input.value;
+                 const num = parseInt(value, 10);
+                 if (isNaN(num) || num < min) {
+                     input.classList.add('is-invalid');
+                     displayFeedback(`Invalid input for ${name}: Must be a whole number >= ${min}.`, true);
+                     // Switch to the relevant tab if invalid
+                     const tabPane = input.closest('.tab-pane');
+                     if (tabPane) {
+                         const tabTrigger = document.querySelector(`[data-bs-target="#${tabPane.id}"]`);
+                         if (tabTrigger) bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
+                     }
+                     input.focus(); 
+                     return false;
+                 }
+                 input.classList.remove('is-invalid');
+                 return true;
+             };
+
+            if (!validateInput(batchSizeInput, 'Batch Size', 1)) return;
+            if (!validateInput(delaySecondsInput, 'Campaign Delay Seconds', 1)) return;
+            if (!validateInput(retryAttemptsInput, 'Retry Attempts', 0)) return;
+            // NEW: Validate new inputs
+            if (!validateInput(queueCheckIntervalSecondsInput, 'Queue Check Interval', 5)) return;
+            if (!validateInput(individualMessageDelaySecondsInput, 'Individual Message Delay', 0)) return;
+
+            const mainMessageValue = mainMessageInput.value.trim();
+            if (!mainMessageValue) {
+                displayFeedback('Main Message cannot be empty.', true);
+                mainMessageInput.classList.add('is-invalid');
+                 // Switch to message tab
+                const tabTrigger = document.getElementById('message-tab');
+                if (tabTrigger) bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
+                mainMessageInput.focus();
+                return;
+             }
+             mainMessageInput.classList.remove('is-invalid');
+
+             if (testModeSwitch.checked && currentTestContacts.length === 0) {
+                displayFeedback('Cannot enable Test Mode with an empty list of test contacts. Please add at least one test contact first.', true);
+                // Switch to general tab
+                 const tabTrigger = document.getElementById('general-tab');
+                if (tabTrigger) bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
+                phoneInput.focus(); 
+                return; 
+            }
+            // --- End Validation ---
+
+            saveBtn.disabled = true;
+            saveSpinner.style.display = 'inline-block';
+
+            // Collect data directly from inputs/state for saving
+            const settingsToSave = {
+                 testMode: testModeSwitch.checked,
+                 testContacts: currentTestContacts, 
+                 batchSize: parseInt(batchSizeInput.value, 10),
+                 delaySeconds: parseInt(delaySecondsInput.value, 10),
+                 retryAttempts: parseInt(retryAttemptsInput.value, 10),
+                 message_main: mainMessageValue, 
+                 message_greetings: currentGreetings, 
+                 message_farewells: currentFarewells, 
+                 // NEW: Add new settings to save object
+                 queueCheckIntervalSeconds: parseInt(queueCheckIntervalSecondsInput.value, 10),
+                 individualMessageDelaySeconds: parseInt(individualMessageDelaySecondsInput.value, 10),
+                 // NEW: Add log_unknown_senders setting
+                 log_unknown_senders: logUnknownSendersSwitch.checked ? '1' : '0'
+             };
+
+            try {
+                 const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(settingsToSave),
+                });
+                const result = await response.json();
+
+                 if (response.ok && result.success) {
+                     displayFeedback(result.message || 'Settings saved successfully!');
+                     // Update state variables AFTER successful save
+                     currentTestMode = settingsToSave.testMode;
+                     currentBatchSize = settingsToSave.batchSize;
+                     currentDelaySeconds = settingsToSave.delaySeconds;
+                     currentRetryAttempts = settingsToSave.retryAttempts;
+                     currentMainMessage = settingsToSave.message_main;
+                     // NEW: Update new state variables
+                     currentQueueCheckIntervalSeconds = settingsToSave.queueCheckIntervalSeconds;
+                     currentIndividualMessageDelaySeconds = settingsToSave.individualMessageDelaySeconds;
+                     // NEW: Update log_unknown_senders state
+                     currentLogUnknownSenders = settingsToSave.log_unknown_senders === '1';
+                     // Greetings/Farewells/TestContacts arrays are already up-to-date in JS state
+                 } else {
+                     // Basic error highlighting - could be more specific if backend provides more detail
+                     if (result.error) {
+                         if (result.error.toLowerCase().includes('batch size')) batchSizeInput.classList.add('is-invalid');
+                         if (result.error.toLowerCase().includes('delay seconds')) delaySecondsInput.classList.add('is-invalid');
+                         if (result.error.toLowerCase().includes('retry attempts')) retryAttemptsInput.classList.add('is-invalid');
+                         if (result.error.toLowerCase().includes('main message')) mainMessageInput.classList.add('is-invalid');
+                         if (result.error.toLowerCase().includes('test contacts')) phoneInput.classList.add('is-invalid');
+                         // NEW: Check new fields
+                         if (result.error.toLowerCase().includes('queue check interval')) queueCheckIntervalSecondsInput.classList.add('is-invalid');
+                         if (result.error.toLowerCase().includes('individual message delay')) individualMessageDelaySecondsInput.classList.add('is-invalid');
+                         // Could attempt to switch tabs based on error
+                         // Example: if (result.error.toLowerCase().includes('main message')) document.getElementById('message-tab').click();
+                     } 
+                     throw new Error(result.error || 'Failed to save settings.');
+                 }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                displayFeedback(`Error saving settings: ${error.message}`, true);
+            } finally {
+                saveBtn.disabled = false;
+                 saveSpinner.style.display = 'none';
+            }
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', loadSettings);
+
+        // Add Test Contact
+        addForm.addEventListener('submit', (e) => {
+             e.preventDefault();
+            const phone = phoneInput.value.trim();
+             const phoneRegex = /^\+\d{5,}$/; 
+             if (phone && phoneRegex.test(phone)) {
+                 if (currentTestContacts.includes(phone)) {
+                     displayFeedback('This phone number is already in the test contacts list.', true); 
+                     phoneInput.focus();
+                     return;
+                 }
+                 currentTestContacts.push(phone); 
+                 renderTestContacts();
+                 addForm.reset(); 
+                 phoneInput.classList.remove('is-invalid');
+             } else {
+                 displayFeedback('Please provide a valid phone number starting with + and containing only digits (min 5). Example: +1234567', true);
+                 phoneInput.classList.add('is-invalid');
+                 phoneInput.focus();
+             }
+        });
+
+        // Remove Test Contact (delegated)
+        testContactsList.addEventListener('click', (e) => {
+             const removeBtn = e.target.closest('.remove-contact-btn');
+             if (removeBtn && removeBtn.dataset.type === 'testContact') { 
+                const indexToRemove = parseInt(removeBtn.dataset.index, 10);
+                if (!isNaN(indexToRemove) && indexToRemove >= 0 && indexToRemove < currentTestContacts.length) {
+                    currentTestContacts.splice(indexToRemove, 1); 
+                    renderTestContacts(); 
+                }
+            }
+        });
+
+        // Add Greeting
+        addGreetingForm.addEventListener('submit', (e) => {
+             e.preventDefault();
+            const newGreeting = newGreetingInput.value.trim();
+            if (newGreeting) {
+                 if (currentGreetings.includes(newGreeting)) {
+                     displayFeedback('This greeting already exists.', true);
+                     return;
+                 }
+                 currentGreetings.push(newGreeting);
+                 renderDynamicList(greetingsList, currentGreetings, 'greeting');
+                 addGreetingForm.reset();
+                 newGreetingInput.classList.remove('is-invalid');
+             } else {
+                 displayFeedback('Greeting text cannot be empty.', true);
+                 newGreetingInput.classList.add('is-invalid');
+             }
+        });
+
+        // Add Farewell
+        addFarewellForm.addEventListener('submit', (e) => {
+             e.preventDefault();
+            const newFarewell = newFarewellInput.value.trim();
+            if (newFarewell) {
+                if (currentFarewells.includes(newFarewell)) {
+                    displayFeedback('This farewell already exists.', true);
+                    return;
+                }
+                currentFarewells.push(newFarewell);
+                renderDynamicList(farewellsList, currentFarewells, 'farewell');
+                addFarewellForm.reset();
+                newFarewellInput.classList.remove('is-invalid');
+            } else {
+                displayFeedback('Farewell text cannot be empty.', true);
+                newFarewellInput.classList.add('is-invalid');
+            }
+        });
+
+        // Remove Greeting/Farewell (delegated to body)
+        document.body.addEventListener('click', (e) => {
+             const removeBtn = e.target.closest('.remove-dynamic-item-btn');
+             if (removeBtn) {
+                const indexToRemove = parseInt(removeBtn.dataset.index, 10);
+                const type = removeBtn.dataset.type; // 'greeting' or 'farewell'
+
+                if (!isNaN(indexToRemove) && indexToRemove >= 0) {
+                     if (type === 'greeting' && indexToRemove < currentGreetings.length) {
+                         currentGreetings.splice(indexToRemove, 1);
+                         renderDynamicList(greetingsList, currentGreetings, 'greeting');
+                     } else if (type === 'farewell' && indexToRemove < currentFarewells.length) {
+                         currentFarewells.splice(indexToRemove, 1);
+                         renderDynamicList(farewellsList, currentFarewells, 'farewell');
+                     }
+                 }
+            }
+        });
+
+        // Save Button
+        saveBtn.addEventListener('click', saveSettings);
+
+        // Clear validation on input
+         [batchSizeInput, delaySecondsInput, retryAttemptsInput, phoneInput, mainMessageInput, newGreetingInput, newFarewellInput,
+          queueCheckIntervalSecondsInput, individualMessageDelaySecondsInput 
+         ].forEach(input => {
+             input.addEventListener('input', () => {
+                 if (input.classList.contains('is-invalid')) {
+                     input.classList.remove('is-invalid');
+                     // hideFeedback(); // Optionally hide global feedback
+                 }
+             });
+         });
+
+        // Delete All Contacts
+        if (deleteAllBtn) {
+            deleteAllBtn.addEventListener('click', function() {
+                 const confirmText = "DELETE";
+                const promptMessage = `DANGER ZONE! This will permanently delete ALL contacts. This CANNOT be undone.\n\nTo confirm, type the word '${confirmText}' (all uppercase):`;
+                const confirmation = prompt(promptMessage);
+
+                if (confirmation === null) {
+                   displayFeedback('Delete operation cancelled.', true);
+                   return;
+                }
+
+                if (confirmation !== confirmText) {
+                   displayFeedback('Incorrect confirmation text. Delete operation cancelled.', true);
+                   return;
+                }
+
+                const finalConfirmation = confirm("Are you absolutely sure? This is your last chance to cancel.");
+                if (!finalConfirmation) {
+                    displayFeedback('Delete operation cancelled.', true);
+                    return;
+                }
+
+                if (deleteAllSpinner) deleteAllSpinner.style.display = 'inline-block';
+                deleteAllBtn.disabled = true;
+
+               fetch('/api/contacts/all', { method: 'DELETE' })
+                   .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errData => {
+                                throw new Error(errData.error || `HTTP error! Status: ${response.status}`);
+                            });
+                        }
+                       return response.json();
+                   })
+                   .then(data => {
+                       if (data.success) {
+                           displayFeedback('Success! All contacts have been deleted.', false);
+                       } else {
+                            throw new Error(data.error || 'Failed to delete contacts.');
+                       }
+                   })
+                   .catch(error => {
+                       console.error('Error deleting all contacts:', error);
+                       displayFeedback(`Error deleting contacts: ${error.message}`, true);
+                   })
+                   .finally(() => {
+                       if (deleteAllSpinner) deleteAllSpinner.style.display = 'none';
+                       deleteAllBtn.disabled = false;
+                   });
+            });
+        }
+
+        // NEW: Delete All Messages
+        if (deleteAllMessagesBtn) {
+            deleteAllMessagesBtn.addEventListener('click', function() {
+                 const confirmText = "MESSAGES";
+                const promptMessage = `DANGER ZONE! This will permanently delete ALL message history. This CANNOT be undone.\n\nTo confirm, type the word '${confirmText}' (all uppercase):`;
+                const confirmation = prompt(promptMessage);
+
+                if (confirmation === null) {
+                   displayFeedback('Delete message history operation cancelled.', true);
+                   return;
+                }
+
+                if (confirmation !== confirmText) {
+                   displayFeedback('Incorrect confirmation text. Delete message history operation cancelled.', true);
+                   return;
+                }
+
+                const finalConfirmation = confirm("Are you absolutely sure you want to delete all message history? This is your last chance to cancel.");
+                if (!finalConfirmation) {
+                    displayFeedback('Delete message history operation cancelled.', true);
+                    return;
+                }
+
+                if (deleteAllMessagesSpinner) deleteAllMessagesSpinner.style.display = 'inline-block';
+                deleteAllMessagesBtn.disabled = true;
+
+               fetch('/api/messages/all', { method: 'DELETE' }) // Use the new endpoint
+                   .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errData => {
+                                throw new Error(errData.error || `HTTP error! Status: ${response.status}`);
+                            });
+                        }
+                       return response.json();
+                   })
+                   .then(data => {
+                       if (data.success) {
+                           displayFeedback('Success! All message history has been deleted.', false);
+                       } else {
+                            throw new Error(data.error || 'Failed to delete message history.');
+                       }
+                   })
+                   .catch(error => {
+                       console.error('Error deleting all messages:', error);
+                       displayFeedback(`Error deleting message history: ${error.message}`, true);
+                   })
+                   .finally(() => {
+                       if (deleteAllMessagesSpinner) deleteAllMessagesSpinner.style.display = 'none';
+                       deleteAllMessagesBtn.disabled = false;
+                   });
+            });
+        }
+
+        // --- Contact Import ---
+        const importForm = document.getElementById('import-form');
+        const importFeedbackDiv = document.getElementById('import-feedback');
+        const importStatusDiv = document.getElementById('import-status');
+        const fileInput = document.getElementById('csvfile');
+        const submitBtn = importForm?.querySelector('button[type="submit"]');
+
+        // File input visual feedback
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    this.classList.add('border-success');
+                } else {
+                    this.classList.remove('border-success');
+                }
+            });
+        }
+
+        if (importForm) {
+            importForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                importFeedbackDiv.style.display = 'none';
+                importFeedbackDiv.className = 'alert mt-3';
+                importStatusDiv.textContent = '';
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Importing...';
+
+                const formData = new FormData();
+                formData.append('csvfile', fileInput.files[0]);
+
+                try {
+                    const response = await fetch('/api/contacts/import', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        importFeedbackDiv.textContent = result.message || 'Import successful!';
+                        importFeedbackDiv.classList.add('alert-success');
+                        if (result.stats) {
+                            importStatusDiv.innerHTML = `
+                                <div class="mt-2 small">
+                                    <div><strong>Total Rows in CSV:</strong> ${result.stats.totalCsvRows ?? 'N/A'}</div>
+                                    <div><strong>Skipped (Missing Name):</strong> ${result.stats.skippedCount ?? 'N/A'}</div>
+                                    <div><strong>Skipped (Duplicate Phone):</strong> ${result.stats.duplicateCount ?? 'N/A'}</div>
+                                    <div><strong>Skipped (Missing Phone):</strong> ${result.stats.skippedEmptyPhoneCount ?? 'N/A'}</div>
+                                    <hr style="margin: 0.5rem 0;">
+                                    <div><strong>Attempted Import:</strong> ${result.stats.totalCsvRows != null && result.stats.skippedCount != null && result.stats.duplicateCount != null && result.stats.skippedEmptyPhoneCount != null ? result.stats.totalCsvRows - result.stats.skippedCount - result.stats.duplicateCount - result.stats.skippedEmptyPhoneCount : 'N/A'}</div>
+                                    <div><strong>Successfully Imported:</strong> ${result.stats.importedCount ?? 'N/A'}</div>
+                                    <ul class="list-unstyled ps-3 mb-0">
+                                       <li><strong>Imported OK:</strong> ${result.stats.importedCount != null && result.stats.importedWithIssues != null ? result.stats.importedCount - result.stats.importedWithIssues : 'N/A'}</li>
+                                       <li><strong>Imported w/ Issues:</strong> ${result.stats.importedWithIssues ?? 'N/A'}</li>
+                                    </ul>
+                                    <div><strong>Import DB Errors:</strong> ${result.stats.errorCount != null ? (result.stats.errorCount >= 0 ? result.stats.errorCount : 'Check Logs') : 'N/A'}</div>
+                                </div>`;
+
+                            // Display list of skipped duplicates if any exist
+                            if (result.stats.duplicatesFound && result.stats.duplicatesFound.length > 0) {
+                                let duplicatesHtml = '<hr><p class="mb-1"><strong>Skipped Duplicates:</strong></p><ul class="list-group list-group-flush small">';
+                                result.stats.duplicatesFound.forEach(dup => {
+                                    duplicatesHtml += `<li class="list-group-item py-1 px-0">${dup.name} (${dup.phone})</li>`;
+                                });
+                                duplicatesHtml += '</ul>';
+                                importStatusDiv.innerHTML += duplicatesHtml; // Append the list to the existing stats
+                            }
+
+                            // NEW: Display list of skipped empty phones if any exist
+                            if (result.stats.skippedEmptyPhoneRecords && result.stats.skippedEmptyPhoneRecords.length > 0) {
+                                let skippedEmptyHtml = '<hr><p class="mb-1"><strong>Skipped (Missing Phone):</strong></p><ul class="list-group list-group-flush small">';
+                                result.stats.skippedEmptyPhoneRecords.forEach(skip => {
+                                    skippedEmptyHtml += `<li class="list-group-item py-1 px-0">${skip.name} (${skip.reason})</li>`;
+                                });
+                                skippedEmptyHtml += '</ul>';
+                                importStatusDiv.innerHTML += skippedEmptyHtml; // Append the list
+                            }
+                        }
+                        // Reset file input visual state
+                        fileInput.classList.remove('border-success');
+                    } else {
+                        importFeedbackDiv.textContent = 'Import Error: ' + (result.error || 'Unknown error');
+                        importFeedbackDiv.classList.add('alert-danger');
+                    }
+                } catch (error) {
+                    importFeedbackDiv.textContent = 'Network error: ' + error.message;
+                    importFeedbackDiv.classList.add('alert-danger');
+                } finally {
+                    importFeedbackDiv.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-upload"></i> Import Contacts';
+                }
+            });
+        }
+
+    </script>
+
+</body>
+</html> 

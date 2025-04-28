@@ -1,0 +1,110 @@
+/* Enhanced stats cards */
+.stats-card {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    border-radius: 0.5rem;
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--bs-success);
+    opacity: 0.1;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+.stats-card .card-body {
+    padding: 1.5rem;
+}
+
+.stats-card .card-title {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.stats-card .card-text {
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    font-size: 2rem !important;
+}
+
+/* Campaign status card */
+.campaign-status-card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.status-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bs-gray-400);
+    margin-right: 0.5rem;
+    display: inline-block;
+}
+
+.status-light.active {
+    background: var(--bs-success);
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.2);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+}
+
+/* Button improvements */
+.btn {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    background: linear-gradient(145deg, #198754 0%, #157347 100%);
+}
+
+.btn-primary {
+    background: linear-gradient(145deg, #0d6efd 0%, #0b5ed7 100%);
+}
+
+.btn-danger {
+    background: linear-gradient(145deg, #dc3545 0%, #bb2d3b 100%);
+}
+
+.btn-success {
+    background: linear-gradient(145deg, #198754 0%, #157347 100%);
+}
+
+/* Alert improvements */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .stats-card .card-text {
+        font-size: 1.75rem !important;
+    }
+} 
