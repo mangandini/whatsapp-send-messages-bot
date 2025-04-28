@@ -12,7 +12,7 @@ An free open-source tool using whatsapp-web.js that turns a plain WhatsApp accou
 
 
 ## Features
-![Conversation view on Mobile phone](docs/screenshots/mobile-conversation.png){ height="600px" style="float: right;" }
+<img src="docs/screenshots/mobile-conversation.png" alt="Conversation view on Mobile phone" height="600" style="float: right;">
 * Send personalized messages to multiple contacts using **customizable templates with placeholders**
 * **A Full Web Interface** to manage all features and settings, everything can be done directly from the interface, no terminal needed.
 * **Randomized Greetings/Farewells:** Enhance message variation by defining multiple greetings and farewells within your template. The bot randomly selects one for each message, reducing repetitive patterns and potentially lowering detection risk when sending bulk messages.
@@ -142,7 +142,7 @@ Once deployed and running:
     *   The `worker` also periodically checks the `outgoing_queue` table (based on *Queue Check Interval*) for individual replies entered via the UI and sends them, respecting the *Individual Message Delay*.
 7.  **Monitor:** Use the "Messages" and "Contacts" views in the web UI to see the status and history.
 
-![Contacts View on Mobile](docs/screenshots/mobile-contacts.png){ height="600px" style="float: right;" }
+<img src="docs/screenshots/mobile-contacts.png" alt="Contacts View on Mobile" height="600" style="float: right;">
 **Note on Failed Individual Replies:**
 
 If an individual reply sent from the Contacts view fails (e.g., invalid number, network issue), the worker process (`main.js`) will log a detailed error to the console. The message record in the `outgoing_queue` table will be updated to `status='FAILED'` and include the error message. The main `messages` table will also log the attempt with `status='FAILED'`.
